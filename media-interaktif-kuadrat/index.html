@@ -105,7 +105,7 @@ input[type=range]{width:100%;min-height:44px;accent-color:var(--accent)}
     <form id="loginForm" novalidate>
       <div class="row">
         <div class="field"><label for="inKode">Kode kelas (dari guru)</label><input type="text" id="inKode" class="short" autocomplete="off" required maxlength="20" aria-describedby="loginErr"></div>
-        <div class="field"><label for="inKelas">Kelas</label><input type="text" id="inKelas" class="short" placeholder="X-3" required maxlength="12" autocomplete="off"></div>
+        <div class="field"><label for="inKelas">Kelas</label><select id="inKelas" required><option value="">Pilih kelas…</option><option>X AL FATTAH</option><option>X AL MAJID</option><option>X AL ALIM</option></select></div>
         <div class="field"><label for="inAbsen">Nomor absen</label><input type="number" id="inAbsen" class="short" min="1" max="60" required inputmode="numeric"></div>
         <div class="field"><label for="inNama">Nama panggilan</label><input type="text" id="inNama" maxlength="30" required autocomplete="off"></div>
       </div>
@@ -466,6 +466,7 @@ const MODULES = [
 function J(){ return ['Dua akar real berbeda','Akar kembar (real)','Dua akar imajiner (tidak real)','Tidak ada penyelesaian']; }
 
 /* ---------------- Status siswa ---------------- */
+const DAFTAR_KELAS = ['X AL FATTAH','X AL MAJID','X AL ALIM'];
 let S = null; // {kode, kelas, absen, nama, sesi}
 let P = {};   // progres per soal: {status:'tuntas'|'mencoba'|'minta_guru', tries, hint, t0}
 let current = 'm1';
@@ -541,7 +542,7 @@ $('#loginForm').addEventListener('submit', async e=>{
         absen = parseInt($('#inAbsen').value,10), nama = $('#inNama').value.trim();
   const err = [];
   if(!/^[A-Za-z0-9]{4,20}$/.test(kode)) err.push('Kode kelas terdiri dari 4–20 huruf/angka.');
-  if(!/^[A-Z0-9 .\-]{1,12}$/.test(kelas)) err.push('Kelas hanya huruf, angka, spasi, titik, atau tanda hubung (contoh: X-3).');
+  if(!DAFTAR_KELAS.includes(kelas)) err.push('Kelas belum dipilih. Pilih kelasmu dari daftar.');
   if(!(absen>=1 && absen<=60)) err.push('Nomor absen 1–60.');
   if(!/^[\p{L} .'\-]{1,30}$/u.test(nama)) err.push('Nama panggilan hanya huruf (maksimal 30).');
   if(err.length){ $('#loginErr').textContent = err.join(' '); $('#'+(err[0].startsWith('Kode')?'inKode':err[0].startsWith('Kelas')?'inKelas':err[0].startsWith('Nomor')?'inAbsen':'inNama')).focus(); return; }
