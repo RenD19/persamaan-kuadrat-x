@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Persamaan Kuadrat Interaktif</title>
+<meta name="description" content="Media latihan persamaan kuadrat Fase E (T1–T4, T7–T8) yang mencatat progres siswa ke Google Sheet guru.">
+<style>
+:root{
+  --bg:#f7f5f0; --surface:#ffffff; --ink:#1d2330; --muted:#566074; --line:#d9d4c7;
+  --accent:#1f5fae; --accent-ink:#ffffff; --ok:#1d6b3a; --ok-bg:#e5f3e9; --bad:#a3271b; --bad-bg:#fbe9e6;
+  --hint-bg:#fff6db; --hint-line:#d9b54a; --focus:#f2a900; --tile-x2:#cfe0f5; --tile-x:#d7ecd9; --tile-1:#f6dfc8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15181f; --surface:#1e222b; --ink:#e9ecf2; --muted:#a9b2c3; --line:#363c49;
+    --accent:#7fb0f0; --accent-ink:#0d1420; --ok:#86d6a1; --ok-bg:#183326; --bad:#ff9d8f; --bad-bg:#3a1f1c;
+    --hint-bg:#30291a; --hint-line:#9b7f2c; --tile-x2:#25405f; --tile-x:#25432d; --tile-1:#4a3624;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15181f; --surface:#1e222b; --ink:#e9ecf2; --muted:#a9b2c3; --line:#363c49;
+  --accent:#7fb0f0; --accent-ink:#0d1420; --ok:#86d6a1; --ok-bg:#183326; --bad:#ff9d8f; --bad-bg:#3a1f1c;
+  --hint-bg:#30291a; --hint-line:#9b7f2c; --tile-x2:#25405f; --tile-x:#25432d; --tile-1:#4a3624;
+}
+*{box-sizing:border-box}
+html{font-size:17px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;line-height:1.6}
+.skip{position:absolute;left:-999px;top:0;background:var(--accent);color:var(--accent-ink);padding:.5rem 1rem;z-index:10}
+.skip:focus{left:1rem}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.top-inner{max-width:880px;margin:0 auto;padding:.6rem 16px;display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;justify-content:space-between}
+.brand{font-weight:700}
+.status{font-size:.85rem;color:var(--muted)}
+.status b{color:var(--ink)}
+main{max-width:880px;margin:0 auto;padding:1rem 16px 4rem}
+h1{font-size:1.6rem;line-height:1.25;margin:.5rem 0 1rem}
+h2{font-size:1.3rem;margin:2rem 0 .5rem}
+p{margin:.4rem 0 .8rem}
+.m{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.12em}
+.card h2{font-size:1.08rem;margin:0 0 .4rem}
+@media (max-width:620px){table.steps thead{display:none} table.steps tr{display:block;border:1px solid var(--line);border-radius:8px;margin:.5rem 0;padding:.3rem .5rem} table.steps tr[hidden]{display:none} table.steps td{display:block;border:0;padding:.15rem 0} table.steps td:first-child::before{content:"Langkah "} table.steps td:last-child{color:var(--muted)} table.steps td:last-child:not(:empty)::before{content:"Alasan: ";font-weight:600}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem;margin:1rem 0}
+.tag{display:inline-block;font-size:.75rem;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:0 .55rem;color:var(--muted);margin-right:.3rem}
+.tag.cp{border-color:var(--hint-line)}
+.muted{color:var(--muted)}
+label{font-weight:600}
+input[type=text],input[type=number],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.4rem .55rem;min-height:44px}
+input[type=text].short{width:7.5rem}
+textarea{width:100%;min-height:4.5rem}
+button{font:inherit;cursor:pointer;border-radius:8px;min-height:44px;padding:.45rem 1rem;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:600}
+button.ghost{background:transparent;color:var(--accent)}
+button:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:flex-end;margin:.5rem 0}
+.field{display:flex;flex-direction:column;gap:.2rem}
+.actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}
+.fb{border-radius:8px;padding:.6rem .8rem;margin-top:.7rem}
+.fb:empty{display:none}
+.fb.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+.fb.bad{background:var(--bad-bg);color:var(--bad);border:1px solid var(--bad)}
+.fb.ok *, .fb.bad *{color:inherit}
+.hints{margin-top:.6rem}
+.hint{background:var(--hint-bg);border-left:4px solid var(--hint-line);padding:.45rem .7rem;margin:.4rem 0;border-radius:0 8px 8px 0}
+.given{background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:.5rem .7rem;margin:.4rem 0}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:.4rem .5rem;text-align:left;vertical-align:top}
+th{background:var(--bg)}
+.steps .step[hidden]{display:none}
+.nav{display:flex;flex-wrap:wrap;gap:.4rem;margin:.6rem 0 1rem}
+.nav button[aria-current="true"]{outline:2px solid var(--ink)}
+.progress{height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.progress>span{display:block;height:100%;background:var(--accent);width:0}
+.svgwrap{max-width:420px}
+svg text{fill:var(--ink);font-family:inherit}
+.boxgrid{display:grid;grid-template-columns:4.5rem 8rem 8rem;grid-template-rows:2.6rem 4.5rem 4.5rem;gap:2px;margin:.6rem 0}
+.boxgrid div{display:flex;align-items:center;justify-content:center;text-align:center;border-radius:4px}
+.boxgrid .lbl{font-weight:600}
+.boxgrid .c-x2{background:var(--tile-x2)}.boxgrid .c-x{background:var(--tile-x)}.boxgrid .c-1{background:var(--tile-1)}
+.sliders .field{min-width:9rem}
+input[type=range]{width:100%;min-height:44px;accent-color:var(--accent)}
+.done-badge{color:var(--ok);font-weight:700}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.extra{border:2px solid var(--hint-line)}
+@media (prefers-reduced-motion: no-preference){ .fb,.hint{animation:fade .25s ease-out} @keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1}} }
+</style>
+</head>
+<body>
+<a class="skip" href="#isi">Lewati ke isi</a>
+<header class="top">
+  <div class="top-inner">
+    <span class="brand">Persamaan Kuadrat · Fase E</span>
+    <span class="status" id="syncStatus" role="status" aria-live="polite">Belum masuk</span>
+    <button type="button" class="ghost" id="btnKeluar" hidden>Keluar</button>
+  </div>
+</header>
+
+<main id="isi" tabindex="-1">
+
+<!-- ============ MASUK ============ -->
+<section id="scrLogin" aria-labelledby="hLogin">
+  <h1 id="hLogin">Masuk untuk mulai belajar</h1>
+  <div class="card">
+    <p>Isi data di bawah. Progresmu dikirim ke catatan gurumu supaya guru tahu bagian mana yang perlu dibantu. Yang dicatat hanya kelas, nomor absen, nama panggilan, jawabanmu, dan berapa kali kamu mencoba. Tidak ada nilai rapor yang diambil dari sini.</p>
+    <form id="loginForm" novalidate>
+      <div class="row">
+        <div class="field"><label for="inKode">Kode kelas (dari guru)</label><input type="text" id="inKode" class="short" autocomplete="off" required maxlength="20" aria-describedby="loginErr"></div>
+        <div class="field"><label for="inKelas">Kelas</label><input type="text" id="inKelas" class="short" placeholder="X-3" required maxlength="12" autocomplete="off"></div>
+        <div class="field"><label for="inAbsen">Nomor absen</label><input type="number" id="inAbsen" class="short" min="1" max="60" required inputmode="numeric"></div>
+        <div class="field"><label for="inNama">Nama panggilan</label><input type="text" id="inNama" maxlength="30" required autocomplete="off"></div>
+      </div>
+      <p id="loginErr" class="fb bad" role="alert"></p>
+      <div class="actions"><button type="submit">Mulai</button></div>
+    </form>
+  </div>
+</section>
+
+<!-- ============ BELAJAR ============ -->
+<section id="scrLearn" hidden aria-labelledby="hModul">
+  <nav aria-label="Pilih modul"><div class="nav" id="modNav"></div></nav>
+  <div class="progress" aria-hidden="true"><span id="progBar"></span></div>
+  <p class="muted" id="progText"></p>
+  <div id="modBody"></div>
+</section>
+
+</main>
+
+<script>
+/* =====================================================================
+   PENGATURAN GURU
+   Tempel URL Web App Google Apps Script di ENDPOINT (berakhiran /exec).
+   Kosongkan untuk mode uji tanpa pengiriman (progres tetap tersimpan di perangkat).
+   ===================================================================== */
+const CONFIG = {
+  ENDPOINT: "",
+  APP_VERSION: "1.0"
+};
+
+/* ---------------- Utilitas ---------------- */
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const EPS = 1e-6;
+function parseNum(raw){
+  if(raw == null) return NaN;
+  let s = String(raw).trim().replace(/[−–]/g,'-').replace(/\s+/g,'').replace(',', '.');
+  if(s === '') return NaN;
+  if(/^[-+]?\d+(\.\d+)?$/.test(s)) return parseFloat(s);
+  const m = s.match(/^([-+]?\d+)\/([-+]?\d+)$/);
+  if(m && +m[2] !== 0) return (+m[1]) / (+m[2]);
+  return NaN;
+}
+const eq = (a,b) => Math.abs(a-b) < EPS;
+function sameSet(got, want){
+  if(got.length !== want.length) return false;
+  const g = [...got].sort((a,b)=>a-b), w = [...want].sort((a,b)=>a-b);
+  return g.every((v,i)=>eq(v,w[i]));
+}
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+function fmt(n){ // tampilan bilangan Indonesia
+  if(!isFinite(n)) return String(n);
+  const r = Math.round(n*100)/100;
+  return String(r).replace('-', '−').replace('.', ',');
+}
+
+/* ---------------- Konten ----------------
+   Mengacu ke guideline: T1–T12 (dok. 1), CPA (dok. 2), Set 1, 2, 5 (dok. 3), K1–K16 (dok. 4).
+   Bantuan memakai tangga 4 tingkat: Sadari, Fokuskan, Hubungkan, Representasi.
+   Bantuan tidak pernah memberikan jawaban.                                     */
+const L = ['Sadari','Fokuskan','Hubungkan','Representasi'];
+
+const MODULES = [
+{
+  id:'m1', title:'1. Bentuk umum dan makna akar', tugas:'T1, T2',
+  items:[
+    {type:'kebun'},
+    {type:'soal', id:'m1-kebun', tugas:'T2', label:'Konteks kebun', fade:'Konkret → piktorial',
+      prompt:'Dari tabel tebak-dan-cek, kamu menemukan nilai x yang membuat x² + 2x = 15. Berapa lebar kebun Pak Rahman (dalam meter)?',
+      fields:[{k:'w', label:'Lebar kebun (m)', t:'num'}],
+      check(v){
+        if(eq(v.w,3)) return {ok:true, msg:'Tepat. Lebar 3 m dan panjang 5 m, luasnya 15 m². Nilai x = −5 juga membuat persamaan benar, tetapi panjang tidak mungkin negatif, jadi ditolak.'};
+        if(eq(v.w,-5)) return {ok:false, code:'K15', msg:'x = −5 memang membuat x² + 2x = 15 benar. Tapi apakah lebar kebun bisa −5 meter?'};
+        if(eq(v.w,5)) return {ok:false, code:'K15', msg:'5 m itu ukuran yang mana, lebar atau panjang? Ingat panjang = x + 2.'};
+        return {ok:false, msg:'Coba masukkan nilaimu ke tabel di atas. Apakah luasnya tepat 15?'};
+      },
+      hints:['Pakai tabel di atas. Nilai x berapa yang membuat kolom luas tepat 15?','Ada dua nilai x yang cocok. Apakah keduanya bisa menjadi ukuran kebun?','Persamaan bisa punya dua akar; konteks yang menentukan akar mana yang dipakai.','Lihat gambar persegi panjang: sisi lebar diberi label x. Ukuran sisi harus bernilai positif.']},
+    {type:'bridge', html:'<b>Jembatan ke bentuk abstrak.</b> Tabel kita menunjukkan <span class="m">x² + 2x = 15</span>. Pindahkan 15 ke kiri: <span class="m">x² + 2x − 15 = 0</span>. Ini <b>bentuk umum</b> <span class="m">ax² + bx + c = 0</span> dengan <span class="m">a = 1</span> (banyak ubin x²), <span class="m">b = 2</span> (banyak ubin x), dan <span class="m">c = −15</span>. <b>Akar</b> adalah nilai x yang membuat ruas kiri sama dengan ruas kanan.'},
+    {type:'contoh', id:'m1-contoh', title:'Contoh lengkap: menata ke bentuk umum dan memeriksa akar',
+      soal:'Ubah <span class="m">2x(x − 3) = x² − 5</span> ke bentuk umum, tentukan a, b, c, lalu periksa apakah x = 1 dan x = 5 merupakan akar.',
+      steps:[
+        ['Jabarkan: <span class="m">2x² − 6x = x² − 5</span>','Bentuk umum tidak memuat kurung. Kalikan 2x ke setiap suku di dalam kurung.'],
+        ['Pindahkan semua suku ke kiri: <span class="m">2x² − 6x − x² + 5 = 0</span>','Ruas kanan harus <b>nol</b>. Memindahkan suku berarti mengurangkan suku itu di kedua ruas, jadi −5 berubah menjadi +5.'],
+        ['Sederhanakan: <span class="m">x² − 6x + 5 = 0</span>','2x² − x² = x². Suku sejenis digabung agar a, b, c terbaca jelas.'],
+        ['<span class="m">a = 1, b = −6, c = 5</span>','Tanda ikut menjadi bagian koefisien. b adalah <b>−6</b>, bukan 6.'],
+        ['Cek x = 1: <span class="m">1² − 6(1) + 5 = 0</span> ✓','Akar membuat ruas kiri = ruas kanan (= 0).'],
+        ['Cek x = 5: <span class="m">25 − 30 + 5 = 0</span> ✓','Keduanya membuat persamaan benar, jadi keduanya akar.']
+      ],
+      explain:['Mengapa ruas kanan harus nol sebelum menentukan a, b, c?','Persamaan −x² + 6x − 5 = 0 setara dengan contoh di atas. Apakah akarnya sama? Jelaskan.']},
+    {type:'soal', id:'m1-mel1', tugas:'T2', label:'Melengkapi 1', fade:'Langkah memeriksa akar dihilangkan',
+      given:'<span class="m">3x² = 4x + 7 → 3x² − 4x − 7 = 0 → a = 3, b = −4, c = −7</span>',
+      prompt:'Periksa akar dengan substitusi.',
+      fields:[{k:'v', label:'Nilai ruas kiri 3x² − 4x − 7 untuk x = −1', t:'num'},
+              {k:'r', label:'Apakah x = 7/3 akar?', t:'choice', opts:['Ya, akar','Bukan akar']}],
+      check(v){
+        const okV = eq(v.v,0), okR = v.r === 'Ya, akar';
+        if(okV && okR) return {ok:true, msg:'Tepat. 3(1) + 4 − 7 = 0, dan untuk x = 7/3: 49/3 − 28/3 − 21/3 = 0. Keduanya akar.'};
+        if(eq(v.v,-6) || eq(v.v,-8) || eq(v.v,-14)) return {ok:false, code:'K13', msg:'Periksa substitusi bilangan negatif. Berapa (−1)²? Berapa −4 × (−1)?'};
+        if(okV && !okR) return {ok:false, msg:'Nilai untuk x = −1 sudah benar. Untuk 7/3, hitung 3·(7/3)², −4·(7/3), lalu −7, dengan penyebut yang sama (3).'};
+        return {ok:false, msg:'Belum tepat. Ganti setiap x dengan nilainya, pakai kurung, lalu hitung pelan-pelan.'};
+      },
+      hints:['Ganti setiap x dengan (−1). Tulis kurungnya.','Hitung per suku: 3(−1)² = ?, −4(−1) = ?, lalu −7.','Akar adalah nilai x yang membuat ruas kiri bernilai 0.','Buat tabel kecil: kolom 3x², kolom −4x, kolom −7, lalu jumlahkan.']},
+    {type:'soal', id:'m1-mel2', tugas:'T1', label:'Melengkapi 2', checkpoint:true, fade:'Menentukan a, b, c dan memeriksa dihilangkan',
+      given:'<span class="m">(x + 2)² = 3x + 10 → x² + 4x + 4 = 3x + 10 → x² + 4x + 4 − 3x − 10 = 0</span>',
+      prompt:'Sederhanakan, tentukan a, b, c, lalu periksa x = 2 dan x = −3.',
+      fields:[{k:'a',label:'a',t:'num'},{k:'b',label:'b',t:'num'},{k:'c',label:'c',t:'num'},
+              {k:'r',label:'Hasil pemeriksaan',t:'choice',opts:['Keduanya akar','Hanya x = 2','Hanya x = −3','Bukan keduanya']}],
+      check(v){
+        const okC = eq(v.a,1)&&eq(v.b,1)&&eq(v.c,-6), okR = v.r==='Keduanya akar';
+        if(okC && okR) return {ok:true, msg:'Tepat: x² + x − 6 = 0, a = 1, b = 1, c = −6. Keduanya akar (4 + 2 − 6 = 0; 9 − 3 − 6 = 0).'};
+        if(eq(v.b,7)) return {ok:false, code:'K10', msg:'Suku 3x pindah dari kanan ke kiri. Kalau kedua ruas dikurangi 3x, berapa 4x − 3x?'};
+        if(eq(v.c,14) || eq(v.c,6)) return {ok:false, code:'K10', msg:'Lihat konstanta: 4 − 10 = ? Tanda ikut menjadi bagian dari c.'};
+        if(okC) return {ok:false, msg:'a, b, c sudah benar. Sekarang substitusi x = 2 dan x = −3 ke x² + x − 6.'};
+        return {ok:false, code:'K10', msg:'Belum tepat. Gabungkan suku sejenis satu per satu: suku x², suku x, lalu konstanta.'};
+      },
+      hints:['Kelompokkan suku sejenis di baris terakhir yang diberikan.','Suku x: 4x dan −3x. Konstanta: 4 dan −10.','Bentuk umum ax² + bx + c = 0: a, b, c adalah koefisien beserta tandanya.','Gambar persegi panjang luas: bagian x², bagian x, dan bagian satuan. Berapa banyak masing-masing setelah digabung?'],
+      extra:{title:'Contoh tambahan (angka berbeda)', html:'<span class="m">x(x + 4) = 2x + 3</span><br>→ <span class="m">x² + 4x = 2x + 3</span> (jabarkan)<br>→ <span class="m">x² + 4x − 2x − 3 = 0</span> (kedua ruas dikurangi 2x + 3)<br>→ <span class="m">x² + 2x − 3 = 0</span>, jadi <span class="m">a = 1, b = 2, c = −3</span><br>Cek x = 1: <span class="m">1 + 2 − 3 = 0</span> ✓ akar. Cek x = 3: <span class="m">9 + 6 − 3 = 12 ≠ 0</span>, bukan akar.'}},
+    {type:'soal', id:'m1-lat1', tugas:'T1', label:'Latihan 1', fade:'Mandiri',
+      prompt:'Tulis <span class="m">(2x − 1)(x + 3) = x + 9</span> dalam bentuk umum dan tentukan a, b, c. Apakah x = 2 akar?',
+      fields:[{k:'a',label:'a',t:'num'},{k:'b',label:'b',t:'num'},{k:'c',label:'c',t:'num'},
+              {k:'r',label:'Apakah x = 2 akar?',t:'choice',opts:['Ya, akar','Bukan akar']}],
+      check(v){
+        // terima kelipatan skalar dari (2, 4, −12), termasuk (1, 2, −6) dan (−2, −4, 12)
+        const k = v.a/2, okC = isFinite(k) && !eq(k,0) && eq(v.b,4*k) && eq(v.c,-12*k), okR = v.r==='Bukan akar';
+        if(okC && okR) return {ok:true, msg:'Tepat: 2x² + 4x − 12 = 0 (atau setaranya x² + 2x − 6 = 0). x = 2 memberi 8 + 8 − 12 = 4 ≠ 0, jadi bukan akar.'};
+        if(isFinite(k) && eq(v.b,6*k)) return {ok:false, code:'K10', msg:'Hasil penjabaranmu benar (2x² + 5x − 3), tetapi suku x di ruas kanan belum dipindahkan. 5x − x = ?'};
+        if(okC) return {ok:false, msg:'Bentuk umummu sudah benar. Substitusi x = 2: apakah hasilnya 0?'};
+        return {ok:false, code:'K10', msg:'Belum tepat. Jabarkan (2x − 1)(x + 3) dulu, lalu pindahkan x + 9 ke kiri.'};
+      },
+      hints:['Jabarkan ruas kiri, lalu periksa dengan menjabarkan ulang.','(2x − 1)(x + 3) = 2x² + 6x − x − 3. Apa yang terjadi pada x + 9 saat dipindah?','Ruas kanan harus nol; tanda ikut menjadi bagian koefisien.','Diagram kotak: baris 2x dan −1, kolom x dan +3. Isi keempat kotaknya.']},
+    {type:'soal', id:'m1-lat3', tugas:'T2', label:'Latihan 2', fade:'Mandiri, arah terbalik',
+      prompt:'Tentukan nilai k jika x = 2 adalah akar dari <span class="m">x² + kx − 10 = 0</span>.',
+      fields:[{k:'k',label:'k',t:'num'}],
+      check(v){
+        if(eq(v.k,3)) return {ok:true, msg:'Tepat. 4 + 2k − 10 = 0 → k = 3. Cek: 4 + 6 − 10 = 0 ✓.'};
+        if(eq(v.k,-3)) return {ok:false, msg:'Substitusi k = −3 dan x = 2. Apakah hasilnya 0? Periksa tanda saat memindahkan suku.'};
+        return {ok:false, msg:'Belum tepat. Karena x = 2 akar, substitusi x = 2 harus membuat persamaan bernilai 0.'};
+      },
+      hints:['Apa artinya “x = 2 adalah akar”?','Ganti x dengan 2: 2² + k·2 − 10 = 0.','Persamaan baru ini linear dalam k. Selesaikan seperti persamaan linear biasa.','Tabel: x = 2, suku x² = 4, suku kx = 2k, konstanta −10. Jumlahnya harus 0.']}
+  ]
+},
+{
+  id:'m2', title:'2. Pemfaktoran (a = 1)', tugas:'T3, T4',
+  items:[
+    {type:'bridge', html:'<b>Hasil kali nol.</b> Kalau dua bilangan dikalikan hasilnya 15, ada banyak kemungkinan (3 × 5, 1 × 15, −3 × −5, …). Tapi kalau hasilnya <b>0</b>, minimal salah satunya <b>pasti 0</b>. Karena itu persamaan harus diubah menjadi <span class="m">(…)(…) = 0</span> sebelum faktor-faktornya disamakan dengan nol.'},
+    {type:'kotak'},
+    {type:'soal', id:'m2-kotak', tugas:'T4', label:'Diagram kotak', fade:'Piktorial',
+      prompt:'Pakai diagram kotak di atas untuk <span class="m">x² − 2x − 15</span>. Dua bilangan p dan q berapa yang hasil kalinya −15 dan jumlahnya −2?',
+      fields:[{k:'p',label:'p',t:'num'},{k:'q',label:'q',t:'num'}],
+      check(v){
+        if(sameSet([v.p,v.q],[3,-5])) return {ok:true, msg:'Tepat. p = 3 dan q = −5, jadi x² − 2x − 15 = (x + 3)(x − 5).'};
+        if(sameSet([v.p,v.q],[-3,5])) return {ok:false, code:'K3', msg:'Hasil kalinya sudah −15. Berapa jumlah −3 + 5? Harusnya −2.'};
+        if(eq(v.p*v.q,-15)) return {ok:false, code:'K3', msg:'Hasil kalinya benar. Periksa syarat kedua: jumlahnya harus −2.'};
+        return {ok:false, code:'K3', msg:'Dua syarat harus dipenuhi sekaligus: hasil kali −15 dan jumlah −2.'};
+      },
+      hints:['Isi p dan q di diagram. Apakah kotak kanan bawah berisi −15 dan dua kotak tengah berjumlah −2x?','Daftar pasangan faktor −15: (1, −15), (−1, 15), (3, −5), (−3, 5). Hitung jumlah masing-masing.','Karena c negatif, tanda p dan q pasti berbeda. Jumlahnya negatif, jadi bilangan yang lebih besar (tanpa tanda) bertanda negatif.','Bayangkan ubin: ubin satuan di pojok membentuk persegi panjang p × q, lajur ubin x berjumlah p + q.']},
+    {type:'contoh', id:'m2-contoh', title:'Contoh lengkap: menentukan akar dengan pemfaktoran',
+      soal:'Tentukan akar-akar <span class="m">x² − 2x − 15 = 0</span>.',
+      steps:[
+        ['Pastikan ruas kanan 0; b = −2, c = −15','Sifat perkalian nol hanya berlaku jika hasil kalinya <b>nol</b>.'],
+        ['Cari p, q dengan p · q = −15 dan p + q = −2 → 3 dan −5','Pada (x + p)(x + q) = x² + (p + q)x + pq, hasil kali memberi c dan jumlah memberi b.'],
+        ['<span class="m">(x + 3)(x − 5) = 0</span>','p dan q masuk ke dalam kurung apa adanya.'],
+        ['Periksa: <span class="m">x² − 5x + 3x − 15 = x² − 2x − 15</span> ✓','Pemeriksaan singkat mencegah salah tanda.'],
+        ['<span class="m">x + 3 = 0</span> atau <span class="m">x − 5 = 0</span>','Hasil kali dua faktor nol, jadi salah satu faktor nol.'],
+        ['<span class="m">x = −3</span> atau <span class="m">x = 5</span>','Tanda akar <b>berlawanan</b> dengan tanda di dalam kurung, karena kita menyelesaikan x + 3 = 0.'],
+        ['Cek: <span class="m">9 + 6 − 15 = 0</span> ✓; <span class="m">25 − 10 − 15 = 0</span> ✓','Substitusi ke persamaan asli.']
+      ],
+      explain:['Mengapa kita mencari dua bilangan yang hasil kalinya c dan jumlahnya b? Hubungkan dengan diagram kotak.']},
+    {type:'soal', id:'m2-mel1', tugas:'T3', label:'Melengkapi 1', fade:'Langkah menentukan akar dan memeriksa dihilangkan',
+      given:'<span class="m">x² + 7x + 12 = 0 → (x + 3)(x + 4) = 0 → x + 3 = 0 atau x + 4 = 0</span>',
+      prompt:'Tentukan kedua akarnya.', fields:[{k:'r',label:'Akar',t:'roots',n:2}],
+      check(v){
+        if(sameSet(v.r,[-3,-4])) return {ok:true, msg:'Tepat: x = −3 atau x = −4. Cek x = −3: 9 − 21 + 12 = 0 ✓.'};
+        if(sameSet(v.r,[3,4])) return {ok:false, code:'K2', msg:'Substitusi x = 3 ke (x + 3)(x + 4). Apakah hasilnya nol?'};
+        return {ok:false, msg:'Selesaikan setiap persamaan linear: x + 3 = 0 dan x + 4 = 0.'};
+      },
+      hints:['Substitusi jawabanmu ke (x + 3)(x + 4). Hasilnya harus 0.','Faktor x + 3 harus bernilai nol. Tulis persamaan itu dan selesaikan.','Bilangan apa yang ditambah 3 hasilnya 0?','Tabel nilai y = (x + 3)(x + 4) untuk x = −5 sampai 0. Di mana y = 0?']},
+    {type:'soal', id:'m2-mel2', tugas:'T4', label:'Melengkapi 2', checkpoint:true, fade:'Langkah menulis faktor sampai memeriksa dihilangkan',
+      given:'<span class="m">x² − x − 12 = 0 → p · q = −12, p + q = −1 → −4 dan 3</span>',
+      prompt:'Tulis faktornya di kertas, periksa dengan menjabarkan, lalu tentukan akarnya.', fields:[{k:'r',label:'Akar',t:'roots',n:2}],
+      check(v){
+        if(sameSet(v.r,[4,-3])) return {ok:true, msg:'Tepat: (x − 4)(x + 3) = 0, jadi x = 4 atau x = −3.'};
+        if(sameSet(v.r,[-4,3])) return {ok:false, code:'K2', msg:'Faktornya (x − 4)(x + 3). Kalau x = −4, apakah x − 4 bernilai nol?'};
+        return {ok:false, msg:'Tulis faktornya dulu: (x + p)(x + q) dengan p = −4 dan q = 3. Lalu samakan tiap faktor dengan nol.'};
+      },
+      hints:['Substitusi jawabanmu ke x² − x − 12. Apakah hasilnya 0?','Dengan p = −4 dan q = 3, faktornya (x − 4)(x + 3). Faktor mana yang nol untuk tiap jawabanmu?','x − 4 = 0 → x = ?   x + 3 = 0 → x = ?','Diagram kotak: label baris x dan −4, label kolom x dan +3. Akar adalah nilai yang membuat salah satu label bernilai 0.'],
+      extra:{title:'Contoh tambahan (angka berbeda)', html:'<span class="m">x² + 2x − 8 = 0</span><br>→ p · q = −8, p + q = 2 → 4 dan −2<br>→ <span class="m">(x + 4)(x − 2) = 0</span><br>→ <span class="m">x + 4 = 0</span> atau <span class="m">x − 2 = 0</span><br>→ <span class="m">x = −4</span> atau <span class="m">x = 2</span> (tanda berlawanan dengan isi kurung)<br>Cek x = 2: <span class="m">4 + 4 − 8 = 0</span> ✓'}},
+    {type:'soal', id:'m2-mel3', tugas:'T4', label:'Melengkapi 3', fade:'Hanya langkah pertama diberikan',
+      given:'<span class="m">x² − 9x + 20 = 0 → b = −9, c = 20</span>',
+      prompt:'Kerjakan semua langkah berikutnya. (c positif dan b negatif: apa artinya untuk tanda p dan q?)', fields:[{k:'r',label:'Akar',t:'roots',n:2}],
+      check(v){
+        if(sameSet(v.r,[4,5])) return {ok:true, msg:'Tepat: p = −4, q = −5, (x − 4)(x − 5) = 0, x = 4 atau 5.'};
+        if(sameSet(v.r,[-4,-5])) return {ok:false, code:'K2', msg:'p dan q-nya −4 dan −5. Tapi akar adalah nilai yang membuat x − 4 = 0. Berapa x?'};
+        return {ok:false, code:'K3', msg:'Cari dua bilangan dengan hasil kali 20 dan jumlah −9. Periksa dengan menjabarkan.'};
+      },
+      hints:['Jabarkan kembali faktor yang kamu tulis. Apakah sama dengan soal?','Hasil kali +20 berarti tanda p dan q sama. Jumlah −9 berarti keduanya negatif.','Daftar pasangan faktor 20 yang keduanya negatif, lalu cek jumlahnya.','Diagram kotak: kanan bawah +20, dua kotak tengah berjumlah −9x.']},
+    {type:'soal', id:'m2-lat1', tugas:'T4', label:'Latihan 1', fade:'Mandiri: belum dalam bentuk umum',
+      prompt:'Tentukan akar-akar <span class="m">x² = 6x − 8</span>.', fields:[{k:'r',label:'Akar',t:'roots',n:2}],
+      check(v){
+        if(sameSet(v.r,[2,4])) return {ok:true, msg:'Tepat: x² − 6x + 8 = 0 → (x − 2)(x − 4) = 0 → x = 2 atau 4.'};
+        if(sameSet(v.r,[-2,-4])) return {ok:false, code:'K2', msg:'Substitusi x = −2 ke x² = 6x − 8. Apakah kedua ruas sama?'};
+        return {ok:false, code:'K1', msg:'Ubah dulu ke bentuk umum (ruas kanan 0), baru faktorkan.'};
+      },
+      hints:['Apakah persamaan ini sudah berbentuk … = 0?','Pindahkan 6x − 8 ke kiri. Apa yang terjadi pada tandanya?','Sifat perkalian nol hanya berlaku jika ruas kanan 0.','Diagram kotak untuk x² − 6x + 8.']},
+    {type:'soal', id:'m2-lat2', tugas:'T4', label:'Latihan 2', fade:'Mandiri: c = 0',
+      prompt:'Tentukan akar-akar <span class="m">x² + 5x = 0</span>. Isi kedua kotak.', fields:[{k:'r',label:'Akar',t:'roots',n:2,allowBlank:true}],
+      check(v){
+        if(sameSet(v.r,[0,-5])) return {ok:true, msg:'Tepat: x(x + 5) = 0 → x = 0 atau x = −5. Membagi dengan x akan menghilangkan akar 0.'};
+        if(v.r.length===1) return {ok:false, code:'K5', msg:'Coba x = 0. Apakah 0² + 5·0 = 0? Akar mana yang hilang?'};
+        if(sameSet(v.r,[0,5])) return {ok:false, code:'K2', msg:'Substitusi x = 5: 25 + 25 = 50, bukan 0. Selesaikan x + 5 = 0.'};
+        return {ok:false, msg:'Keluarkan faktor persekutuan x dari x² + 5x.'};
+      },
+      hints:['Coba x = 0. Apakah persamaannya benar?','Kalau kamu membagi kedua ruas dengan x, bolehkah x bernilai 0?','Ubah ke bentuk hasil kali: x(…) = 0, lalu pakai sifat perkalian nol.','Sketsa y = x² dan y = −5x. Berapa kali keduanya berpotongan?']},
+    {type:'soal', id:'m2-lat3', tugas:'T4', label:'Latihan 3', fade:'Mandiri: b = 0',
+      prompt:'Tentukan akar-akar <span class="m">x² − 49 = 0</span>. Isi kedua kotak.', fields:[{k:'r',label:'Akar',t:'roots',n:2,allowBlank:true}],
+      check(v){
+        if(sameSet(v.r,[7,-7])) return {ok:true, msg:'Tepat: (x − 7)(x + 7) = 0 → x = 7 atau x = −7.'};
+        if(v.r.length===1 && (eq(v.r[0],7)||eq(v.r[0],-7))) return {ok:false, code:'K6', msg:'Coba x = ' + (eq(v.r[0],7)?'−7':'7') + ' di x² = 49. Bilangan apa saja yang kuadratnya 49?'};
+        return {ok:false, msg:'x² − 49 adalah selisih kuadrat: x² − 7².'};
+      },
+      hints:['Bilangan apa saja yang jika dikuadratkan hasilnya 49?','√49 memang 7, tapi pertanyaannya “x berapa saja yang kuadratnya 49”.','Selisih kuadrat: x² − 7² = (x − 7)(x + 7).','Garis y = 49 dan parabola y = x² berpotongan di berapa titik?']},
+    {type:'soal', id:'m2-rani', tugas:'T3', label:'Pemahaman', fade:'Analisis kesalahan',
+      prompt:'Rani menulis: <span class="m">x² − 2x = 8 → x(x − 2) = 8 → x = 8 atau x − 2 = 8 → x = 10</span>. Di mana letak kesalahannya, dan berapa akar yang benar?',
+      fields:[{k:'e',label:'Letak kesalahan',t:'choice',opts:['Rani salah mengeluarkan faktor x','Rani memakai sifat perkalian nol padahal ruas kanan bukan 0','Seharusnya x = −8 atau x = −6','Tidak ada kesalahan']},
+              {k:'r',label:'Akar yang benar',t:'roots',n:2}],
+      check(v){
+        const okE = v.e==='Rani memakai sifat perkalian nol padahal ruas kanan bukan 0', okR = sameSet(v.r,[4,-2]);
+        if(okE && okR) return {ok:true, msg:'Tepat. Hasil kali 8 tidak memaksa salah satu faktor bernilai 8. Ubah dulu ke x² − 2x − 8 = 0 → (x − 4)(x + 2) = 0 → x = 4 atau −2.'};
+        if(!okE) return {ok:false, code:'K1', msg:'Substitusi x = 8 ke x² − 2x = 8: 64 − 16 = 48. Kalau dua bilangan dikalikan hasilnya 8, apakah salah satunya pasti 8?'};
+        return {ok:false, msg:'Letak kesalahan sudah tepat. Sekarang selesaikan dengan benar: buat ruas kanan nol dulu.'};
+      },
+      hints:['Substitusi x = 8 ke persamaan awal. Apakah hasilnya benar?','Kalau x(x − 2) = 8, apakah x pasti 8?','Sebutkan tiga pasangan bilangan yang hasil kalinya 8. Sekarang pasangan yang hasil kalinya 0. Apa bedanya?','Langkah apa yang membuat ruas kanan menjadi nol?']}
+  ]
+},
+{
+  id:'m3', title:'3. Diskriminan dan akar imajiner', tugas:'T7, T8',
+  items:[
+    {type:'explorer'},
+    {type:'soal', id:'m3-geser', tugas:'T8', label:'Geser parabola', fade:'Konkret (digital)',
+      prompt:'Di penjelajah, atur a = 1, b = −4, lalu geser c. Berapa nilai c agar grafik <b>menyinggung</b> sumbu x (tepat satu titik)?',
+      fields:[{k:'c',label:'c',t:'num'}],
+      check(v){
+        if(eq(v.c,4)) return {ok:true, msg:'Tepat. Untuk c = 4: D = 16 − 16 = 0, puncak (2, 0) tepat di sumbu x, akar kembar x = 2.'};
+        if(v.c < 4) return {ok:false, msg:'Dengan c itu parabola memotong sumbu x di dua titik. Geser naik sedikit.'};
+        return {ok:false, msg:'Dengan c itu parabola tidak menyentuh sumbu x. Geser turun sedikit.'};
+      },
+      hints:['Perhatikan nilai D di penjelajah saat kamu menggeser c.','Menyinggung berarti banyaknya titik potong = 1. Nilai D berapa saat itu terjadi?','D = b² − 4ac = 16 − 4c. Kapan D = 0?','Lihat puncak parabola: harus tepat di sumbu x.']},
+    {type:'soal', id:'m3-sortir', tugas:'T8', label:'Memilah jenis akar', fade:'Piktorial → abstrak',
+      prompt:'Hitung D untuk setiap persamaan, lalu tentukan jenis akarnya.',
+      fields:[{k:'e1',label:'x² − 6x + 9 = 0',t:'choice',opts:J()},{k:'e2',label:'x² + 4x + 7 = 0',t:'choice',opts:J()},{k:'e3',label:'2x² − 3x − 4 = 0',t:'choice',opts:J()}],
+      check(v){
+        const want = {e1:J()[1], e2:J()[2], e3:J()[0]};
+        const wrong = Object.keys(want).filter(k=>v[k]!==want[k]);
+        if(!wrong.length) return {ok:true, msg:'Tepat. D = 0, D = −12, D = 41.'};
+        if(Object.values(v).includes(J()[3])) return {ok:false, code:'K9', msg:'D < 0 berarti tidak ada akar <b>real</b>. Apakah berarti tidak ada penyelesaian sama sekali?'};
+        if(wrong.includes('e3')) return {ok:false, code:'K8', msg:'Untuk 2x² − 3x − 4: b = −3, jadi b² = (−3)² = ? Dan −4ac = −4(2)(−4) = ?'};
+        return {ok:false, msg:'Periksa D untuk persamaan ' + wrong.map(k=>({e1:'pertama',e2:'kedua',e3:'ketiga'})[k]).join(' dan ') + '.'};
+      },
+      hints:['Tulis a, b, c tiap persamaan beserta tandanya.','Hitung D = b² − 4ac satu per satu, pakai kurung untuk bilangan negatif.','D > 0: dua akar real berbeda. D = 0: akar kembar. D < 0: dua akar imajiner.','Masukkan persamaannya ke penjelajah. Berapa kali grafik memotong sumbu x?']},
+    {type:'contoh', id:'m3-contohA', title:'Contoh lengkap A: rumus abc, akar irasional',
+      soal:'Tentukan akar-akar <span class="m">2x² − 3x − 4 = 0</span>.',
+      steps:[
+        ['<span class="m">a = 2, b = −3, c = −4</span>','Tulis lengkap dengan tanda; kebanyakan kesalahan rumus abc adalah kesalahan tanda.'],
+        ['<span class="m">D = (−3)² − 4(2)(−4) = 9 + 32 = 41</span>','Hitung D terpisah lebih dulu. (−3)² = 9, bukan −9.'],
+        ['<span class="m">x = (−(−3) ± √41) / (2 · 2)</span>','Gunakan kurung saat substitusi b negatif.'],
+        ['<span class="m">x = (3 ± √41) / 4</span>','−(−3) = 3. Penyebut 2a membagi <b>seluruh</b> pembilang.'],
+        ['<span class="m">x₁ ≈ 2,35; x₂ ≈ −0,85</span>','Bentuk eksak adalah jawaban utama; desimal untuk memeriksa.']
+      ],
+      explain:['Mengapa kita menghitung D terlebih dahulu sebelum memakai seluruh rumus?']},
+    {type:'contoh', id:'m3-contohB', title:'Contoh lengkap B: akar imajiner',
+      soal:'Tentukan akar-akar <span class="m">x² − 4x + 13 = 0</span>.',
+      steps:[
+        ['<span class="m">a = 1, b = −4, c = 13</span>',''],
+        ['<span class="m">D = 16 − 52 = −36</span>','D < 0: tidak ada akar <b>real</b>; grafik tidak memotong sumbu x. Akar tetap ada sebagai bilangan imajiner.'],
+        ['<span class="m">√−36 = √36 · √−1 = 6i</span>','i = √−1, sehingga i² = −1. √−36 bukan −6, karena (−6)² = 36.'],
+        ['<span class="m">x = (4 ± 6i) / 2</span>','−b = 4.'],
+        ['<span class="m">x = 2 ± 3i</span>','Bagi <b>setiap</b> suku pembilang dengan 2.'],
+        ['Cek: <span class="m">(2 + 3i)² − 4(2 + 3i) + 13 = 4 + 12i − 9 − 8 − 12i + 13 = 0</span> ✓','i² diganti −1; bagian i saling menghilangkan.']
+      ],
+      explain:['Mengapa akar imajiner dari persamaan berkoefisien real selalu berpasangan seperti 2 + 3i dan 2 − 3i?']},
+    {type:'soal', id:'m3-mel1', tugas:'T7', label:'Melengkapi 1', fade:'Langkah akhir dihilangkan',
+      given:'<span class="m">x² + 6x + 4 = 0 → D = 36 − 16 = 20 → x = (−6 ± √20) / 2</span>',
+      prompt:'Sederhanakan √20 dan tulis akar dalam bentuk <span class="m">x = p ± √r</span>.',
+      fields:[{k:'p',label:'p',t:'num'},{k:'r',label:'r',t:'num'}],
+      check(v){
+        if(eq(v.p,-3)&&eq(v.r,5)) return {ok:true, msg:'Tepat: √20 = 2√5, x = (−6 ± 2√5)/2 = −3 ± √5.'};
+        if(eq(v.p,-6)) return {ok:false, code:'K8', msg:'Penyebut 2 membagi apa saja? Hanya √20, atau seluruh pembilang?'};
+        if(eq(v.r,20)) return {ok:false, msg:'√20 belum disederhanakan, dan pembagian dengan 2 belum dilakukan. √20 = √4 · √5 = ?'};
+        if(eq(v.p,-3)&&eq(v.r,10)) return {ok:false, code:'K8', msg:'(2√5)/2 = √5. Periksa: apakah √20 / 2 sama dengan √10?'};
+        return {ok:false, msg:'Belum tepat. Sederhanakan √20 dulu, lalu bagi setiap suku pembilang dengan 2.'};
+      },
+      hints:['Periksa jawabanmu dengan kalkulator: nilai desimalnya sama dengan (−6 ± √20)/2?','√20 = √(4 · 5). Berapa √4?','Penyebut membagi seluruh pembilang: (−6)/2 dan (2√5)/2.','Tulis dua kolom: −6 ÷ 2 dan 2√5 ÷ 2.']},
+    {type:'soal', id:'m3-mel2', tugas:'T8', label:'Melengkapi 2', checkpoint:true, fade:'Menyederhanakan √D dan langkah akhir dihilangkan',
+      given:'<span class="m">x² + 2x + 5 = 0 → a = 1, b = 2, c = 5 → D = 4 − 20 = −16</span>',
+      prompt:'Tulis √−16 dengan i, lalu tentukan akarnya dalam bentuk <span class="m">x = p ± qi</span>.',
+      fields:[{k:'s',label:'√−16 = … i',t:'num'},{k:'p',label:'p',t:'num'},{k:'q',label:'q (positif)',t:'num'},
+              {k:'j',label:'Kesimpulan',t:'choice',opts:['Dua akar imajiner','Tidak ada penyelesaian']}],
+      check(v){
+        if(v.j==='Tidak ada penyelesaian') return {ok:false, code:'K9', msg:'Tidak ada penyelesaian <b>real</b>. Bilangan apa yang kuadratnya −16?'};
+        if(eq(v.s,4)&&eq(v.p,-1)&&eq(Math.abs(v.q),2)) return {ok:true, msg:'Tepat: √−16 = 4i, x = (−2 ± 4i)/2 = −1 ± 2i.'};
+        if(eq(v.s,-4)) return {ok:false, code:'K9', msg:'(−4)² = 16, bukan −16. √−16 = √16 · √−1 = ?'};
+        if(eq(v.s,4)&&(eq(v.p,-2)||eq(Math.abs(v.q),4))) return {ok:false, code:'K8', msg:'Bagi <b>setiap</b> suku pembilang (−2 dan 4i) dengan 2.'};
+        return {ok:false, msg:'Belum tepat. Ingat x = (−b ± √D) / 2a.'};
+      },
+      hints:['Cek satu akar dengan substitusi; ingat i² = −1.','√−16 = √16 · √−1. Lalu −b = ?','i = √−1. Penyebut 2a membagi seluruh pembilang.','Penjelajah: grafik x² + 2x + 5 tidak memotong sumbu x. Itu sebabnya akarnya tidak real.'],
+      extra:{title:'Contoh tambahan (angka berbeda)', html:'<span class="m">x² − 2x + 10 = 0</span><br>→ a = 1, b = −2, c = 10<br>→ <span class="m">D = (−2)² − 4(1)(10) = 4 − 40 = −36</span><br>→ <span class="m">√−36 = 6i</span><br>→ <span class="m">x = (2 ± 6i) / 2 = 1 ± 3i</span> (bagi setiap suku dengan 2)'}},
+    {type:'soal', id:'m3-mel3', tugas:'T7', label:'Melengkapi 3', fade:'D dan langkah berikutnya dihilangkan',
+      given:'<span class="m">3x² − 5x + 1 = 0 → a = 3, b = −5, c = 1</span>',
+      prompt:'Hitung D, lalu tulis akar dalam bentuk <span class="m">x = (m ± √D) / n</span>.',
+      fields:[{k:'d',label:'D',t:'num'},{k:'m',label:'m',t:'num'},{k:'n',label:'n',t:'num'}],
+      check(v){
+        if(eq(v.d,13)&&eq(v.m,5)&&eq(v.n,6)) return {ok:true, msg:'Tepat: D = 25 − 12 = 13, x = (5 ± √13)/6.'};
+        if(eq(v.d,37)) return {ok:false, code:'K8', msg:'−4ac = −4(3)(1) = ? Tanda minus di rumus D jangan hilang.'};
+        if(eq(v.d,-25+(-12))||eq(v.d,-13)) return {ok:false, code:'K8', msg:'b² = (−5)² = ? Yang dikuadratkan −5, bukan 5 lalu diberi minus.'};
+        if(eq(v.d,13)&&eq(v.m,-5)) return {ok:false, code:'K8', msg:'−b dengan b = −5 adalah −(−5) = ?'};
+        if(eq(v.d,13)&&eq(v.n,3)) return {ok:false, code:'K8', msg:'Penyebutnya 2a, bukan a.'};
+        return {ok:false, msg:'Belum tepat. Tulis D = (−5)² − 4(3)(1) dengan kurung.'};
+      },
+      hints:['Periksa D dengan menghitung ulang memakai kurung.','b = −5: b² = (−5)², −b = −(−5).','x = (−b ± √D) / 2a.','Tabel dua kolom: rumus umum di kiri, angka soal di kanan.']},
+    {type:'soal', id:'m3-lat1', tugas:'T8', label:'Latihan 1', fade:'Mandiri',
+      prompt:'Tentukan akar-akar <span class="m">x² − 6x + 10 = 0</span> dalam bentuk <span class="m">p ± qi</span>.',
+      fields:[{k:'d',label:'D',t:'num'},{k:'p',label:'p',t:'num'},{k:'q',label:'q (positif)',t:'num'}],
+      check(v){
+        if(eq(v.d,-4)&&eq(v.p,3)&&eq(Math.abs(v.q),1)) return {ok:true, msg:'Tepat: D = −4, x = (6 ± 2i)/2 = 3 ± i.'};
+        if(eq(v.d,-4)&&eq(Math.abs(v.q),2)) return {ok:false, code:'K8', msg:'Bagi setiap suku pembilang dengan 2a = 2.'};
+        if(eq(v.d,-4)&&eq(v.p,-3)) return {ok:false, code:'K8', msg:'−b dengan b = −6 adalah ?'};
+        if(!eq(v.d,-4)) return {ok:false, code:'K8', msg:'Hitung ulang D = (−6)² − 4(1)(10).'};
+        return {ok:false, msg:'Belum tepat. √−4 = 2i.'};
+      },
+      hints:['Cek satu akar dengan substitusi; ingat i² = −1.','D = 36 − 40. √−4 = ?','x = (−b ± √D)/2a, bagi setiap suku.','Grafik y = x² − 6x + 10 di penjelajah: puncaknya di atas sumbu x.']},
+    {type:'soal', id:'m3-lat2', tugas:'T8', label:'Latihan 2', fade:'Mandiri: apa yang istimewa dari D?',
+      prompt:'Untuk <span class="m">4x² + 4x + 1 = 0</span>, hitung D dan tentukan akarnya.',
+      fields:[{k:'d',label:'D',t:'num'},{k:'x',label:'Akar kembar x',t:'num'}],
+      check(v){
+        if(eq(v.d,0)&&eq(v.x,-0.5)) return {ok:true, msg:'Tepat: D = 0, akar kembar x = −4/8 = −1/2. Grafiknya menyinggung sumbu x.'};
+        if(eq(v.d,0)&&eq(v.x,0.5)) return {ok:false, code:'K8', msg:'x = −b/2a. Tanda −b?'};
+        if(eq(v.d,0)&&eq(v.x,-2)) return {ok:false, code:'K8', msg:'Penyebutnya 2a = 8.'};
+        if(eq(v.d,0)) return {ok:false, msg:'D sudah benar. Jika D = 0, x = −b/2a.'};
+        return {ok:false, code:'K8', msg:'Hitung ulang D = 4² − 4(4)(1).'};
+      },
+      hints:['Substitusi jawabanmu. Apakah hasilnya 0?','D = 16 − 16. Kalau √D = 0, apa yang terjadi pada tanda ±?','Akar kembar: x = −b / 2a.','Penjelajah: a = 4, b = 4, c = 1. Di mana grafik menyentuh sumbu x?']},
+    {type:'soal', id:'m3-lat3', tugas:'T7', label:'Latihan 3', fade:'Mandiri: belum dalam bentuk umum',
+      prompt:'Hitung D untuk <span class="m">2x² + x = 2</span>, lalu tentukan jenis akarnya.',
+      fields:[{k:'d',label:'D',t:'num'},{k:'j',label:'Jenis akar',t:'choice',opts:J()}],
+      check(v){
+        if(eq(v.d,17)&&v.j===J()[0]) return {ok:true, msg:'Tepat: 2x² + x − 2 = 0, D = 1 + 16 = 17 > 0, dua akar real berbeda: x = (−1 ± √17)/4.'};
+        if(eq(v.d,1)) return {ok:false, code:'K10', msg:'Apakah persamaannya sudah berbentuk … = 0? Berapa c?'};
+        if(eq(v.d,17)) return {ok:false, msg:'D sudah benar. D > 0 berarti jenis akarnya apa?'};
+        if(v.j===J()[3]) return {ok:false, code:'K9', msg:'Periksa D dulu. Lagi pula, D < 0 pun tetap punya akar imajiner.'};
+        return {ok:false, code:'K10', msg:'Tata ke bentuk umum dulu, lalu tentukan a, b, c.'};
+      },
+      hints:['Ruas kanan sudah 0?','Pindahkan 2 ke kiri: c = ?','D = b² − 4ac dengan a = 2, b = 1, c = −2.','Penjelajah: a = 2, b = 1, c = −2. Berapa titik potong dengan sumbu x?']}
+  ]
+}];
+function J(){ return ['Dua akar real berbeda','Akar kembar (real)','Dua akar imajiner (tidak real)','Tidak ada penyelesaian']; }
+
+/* ---------------- Status siswa ---------------- */
+let S = null; // {kode, kelas, absen, nama, sesi}
+let P = {};   // progres per soal: {status:'tuntas'|'mencoba'|'minta_guru', tries, hint, t0}
+let current = 'm1';
+const KEY = () => 'pk-progres:' + S.kelas + ':' + S.absen;
+
+/* ---------------- Antrean pengiriman ---------------- */
+const Q = {
+  key:'pk-antrean',
+  list(){ return store.get(this.key, []); },
+  // setiap item menyimpan identitas pengirimnya, supaya di perangkat bersama data siswa A tidak terkirim atas nama siswa B
+  push(ev){ const l = this.list(); l.push({who:{kode:S.kode, kelas:S.kelas, absen:S.absen, nama:S.nama, sesi:S.sesi}, ev}); store.set(this.key, l.slice(-2000)); updateStatus(); flushSoon(); },
+  drop(n){ const l = this.list(); store.set(this.key, l.slice(n)); }
+};
+let flushTimer = null, sending = false, lastErr = '';
+function flushSoon(){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, 800); }
+async function flush(){
+  if(sending) return;
+  const l = Q.list();
+  if(!l.length){ updateStatus(); return; }
+  if(!CONFIG.ENDPOINT){ updateStatus(); return; }
+  sending = true; updateStatus('Mengirim…');
+  const w = l[0].who, same = x => x.who.kelas===w.kelas && x.who.absen===w.absen && x.who.sesi===w.sesi && x.who.kode===w.kode;
+  let n = 0; while(n < l.length && n < 25 && same(l[n])) n++;
+  const batch = l.slice(0, n).map(x=>x.ev);
+  try{
+    const res = await fetch(CONFIG.ENDPOINT, {
+      method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // permintaan "simple": tanpa preflight CORS
+      body: JSON.stringify({v:CONFIG.APP_VERSION, kode:w.kode, kelas:w.kelas, absen:w.absen, nama:w.nama, sesi:w.sesi, events:batch})
+    });
+    const data = await res.json();
+    if(data && data.ok){ Q.drop(batch.length); lastErr=''; }
+    else {
+      const e = (data && data.error) || 'ditolak';
+      // penolakan permanen (data tidak akan pernah diterima): buang agar tidak menyumbat antrean siswa lain
+      if(['kode_salah','kelas','absen','nama','sesi','terlalu_banyak'].includes(e)) Q.drop(batch.length);
+      lastErr = e==='kode_salah' ? 'Kode kelas salah. Tanyakan ke guru.' : e==='ditutup' ? 'Guru sedang menutup penerimaan data.' : e;
+    }
+  }catch(e){ lastErr = 'offline'; }
+  sending = false; updateStatus();
+  if(!lastErr && Q.list().length) flushSoon();
+}
+window.addEventListener('online', flushSoon);
+setInterval(()=>{ if(Q.list().length) flush(); }, 30000);
+function updateStatus(msg){
+  const el = $('#syncStatus'); if(!S){ el.textContent='Belum masuk'; return; }
+  const n = Q.list().length;
+  let t = `<b>${esc(S.nama)}</b> · ${esc(S.kelas)}/${esc(S.absen)} · `;
+  if(msg) t += msg;
+  else if(!CONFIG.ENDPOINT) t += 'Mode uji: progres hanya di perangkat ini';
+  else if(!n) t += 'Progres terkirim ke guru ✓';
+  else if(lastErr==='offline') t += `Belum terkirim (${n}), akan dicoba lagi saat online`;
+  else if(lastErr) t += `Belum terkirim (${n}): ${esc(lastErr)}`;
+  else t += `Menunggu kirim (${n})`;
+  el.innerHTML = t;
+}
+function log(ev){
+  Q.push(Object.assign({t:new Date().toISOString()}, ev));
+}
+
+/* ---------------- Masuk ---------------- */
+async function cekKode(kode){ // true = diterima/tidak bisa dicek (offline), false = kode salah
+  if(!CONFIG.ENDPOINT || !navigator.onLine) return true;
+  try{
+    const res = await fetch(CONFIG.ENDPOINT, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({kode, kelas:'CEK', absen:1, nama:'cek', sesi:'cek', events:[]})});
+    const d = await res.json(); return d.error !== 'kode_salah';
+  }catch(e){ return true; }
+}
+$('#loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const kode = $('#inKode').value.trim(), kelas = $('#inKelas').value.trim().toUpperCase(),
+        absen = parseInt($('#inAbsen').value,10), nama = $('#inNama').value.trim();
+  const err = [];
+  if(!/^[A-Za-z0-9]{4,20}$/.test(kode)) err.push('Kode kelas terdiri dari 4–20 huruf/angka.');
+  if(!/^[A-Z0-9 .\-]{1,12}$/.test(kelas)) err.push('Kelas hanya huruf, angka, spasi, titik, atau tanda hubung (contoh: X-3).');
+  if(!(absen>=1 && absen<=60)) err.push('Nomor absen 1–60.');
+  if(!/^[\p{L} .'\-]{1,30}$/u.test(nama)) err.push('Nama panggilan hanya huruf (maksimal 30).');
+  if(err.length){ $('#loginErr').textContent = err.join(' '); $('#'+(err[0].startsWith('Kode')?'inKode':err[0].startsWith('Kelas')?'inKelas':err[0].startsWith('Nomor')?'inAbsen':'inNama')).focus(); return; }
+  $('#loginErr').textContent = '';
+  if(!(await cekKode(kode))){ $('#loginErr').textContent = 'Kode kelas tidak dikenali. Periksa lagi atau tanyakan ke guru.'; $('#inKode').focus(); return; }
+  S = {kode, kelas, absen, nama, sesi: Math.random().toString(36).slice(2,10)};
+  store.set('pk-siswa', {kode, kelas}); // nama & absen tidak diingat, agar tidak terlihat oleh pengguna berikutnya
+  $('#btnKeluar').hidden = false;
+  P = store.get(KEY(), {});
+  log({jenis:'mulai'});
+  $('#scrLogin').hidden = true; $('#scrLearn').hidden = false;
+  render(); $('#isi').focus();
+});
+(function prefill(){
+  const s = store.get('pk-siswa', null);
+  if(s){ $('#inKode').value=s.kode||''; $('#inKelas').value=s.kelas||''; }
+})();
+$('#btnKeluar').onclick = ()=>{
+  flush();
+  S = null; P = {}; current = 'm1';
+  $('#inAbsen').value=''; $('#inNama').value='';
+  $('#btnKeluar').hidden = true; $('#scrLearn').hidden = true; $('#scrLogin').hidden = false; $('#modBody').innerHTML='';
+  updateStatus(); $('#inAbsen').focus();
+};
+
+/* ---------------- Render ---------------- */
+function render(){
+  const nav = $('#modNav'); nav.innerHTML='';
+  MODULES.forEach(m=>{
+    const b = document.createElement('button'); b.className='ghost'; b.type='button';
+    const soal = m.items.filter(i=>i.type==='soal'), done = soal.filter(i=>P[i.id]?.status==='tuntas').length;
+    b.textContent = `${m.title} (${done}/${soal.length})`;
+    b.setAttribute('aria-current', m.id===current ? 'true':'false');
+    b.onclick = ()=>{ current=m.id; render(); $('#hModul').focus(); };
+    nav.appendChild(b);
+  });
+  const all = MODULES.flatMap(m=>m.items.filter(i=>i.type==='soal')), done = all.filter(i=>P[i.id]?.status==='tuntas').length;
+  $('#progBar').style.width = (100*done/all.length)+'%';
+  $('#progText').textContent = `Tuntas ${done} dari ${all.length} soal.`;
+  const m = MODULES.find(x=>x.id===current), body = $('#modBody');
+  body.innerHTML = `<h1 id="hModul" tabindex="-1">${esc(m.title)}</h1><p class="muted">Tugas: ${m.tugas}. Kerjakan berurutan. Soal bertanda “Titik periksa” menentukan apakah kamu perlu satu contoh tambahan.</p>`;
+  m.items.forEach(it=>body.appendChild(renderItem(it, m)));
+  const next = MODULES[MODULES.indexOf(m)+1];
+  const end = document.createElement('div'); end.className='actions';
+  if(next){ const b=document.createElement('button'); b.type='button'; b.textContent='Lanjut ke '+next.title; b.onclick=()=>{ current=next.id; render(); $('#hModul').focus(); window.scrollTo(0,0); }; end.appendChild(b); }
+  body.appendChild(end);
+}
+
+function renderItem(it, m){
+  const box = document.createElement('section'); box.className='card';
+  if(it.type==='bridge'){ box.innerHTML = `<p>${it.html}</p>`; return box; }
+  if(it.type==='kebun') return renderKebun(box);
+  if(it.type==='kotak') return renderKotak(box);
+  if(it.type==='explorer') return renderExplorer(box);
+  if(it.type==='contoh') return renderContoh(box, it, m);
+  if(it.type==='soal') return renderSoal(box, it, m);
+  return box;
+}
+
+function renderContoh(box, it, m){
+  const hid = 'h-'+it.id;
+  box.setAttribute('aria-labelledby', hid);
+  box.innerHTML = `<h2 id="${hid}">${esc(it.title)}</h2><p><span class="tag">Contoh lengkap</span>${it.soal}</p>
+  <p class="muted">Pelajari setiap langkah dan alasannya (jangan disalin). Buka langkah satu per satu.</p>
+  <table class="steps"><thead><tr><th scope="col">Langkah</th><th scope="col">Tindakan</th><th scope="col">Alasan</th></tr></thead><tbody>
+  ${it.steps.map((s,i)=>`<tr class="step" ${i>0?'hidden':''}><td>${i+1}</td><td>${s[0]}</td><td>${s[1]}</td></tr>`).join('')}
+  </tbody></table>
+  <div class="actions"><button type="button" class="ghost" data-act="next">Buka langkah berikutnya</button><button type="button" class="ghost" data-act="all">Tampilkan semua</button></div>
+  <div class="explain"></div>`;
+  const rows = [...box.querySelectorAll('tr.step')];
+  const reveal = all => { const h = rows.filter(r=>r.hidden); (all?h:h.slice(0,1)).forEach(r=>r.hidden=false); if(!rows.some(r=>r.hidden)){ box.querySelectorAll('[data-act]').forEach(b=>b.disabled=true); showExplain(); } };
+  box.querySelector('[data-act=next]').onclick=()=>reveal(false);
+  box.querySelector('[data-act=all]').onclick=()=>reveal(true);
+  function showExplain(){
+    const ex = box.querySelector('.explain'); if(ex.childElementCount) return;
+    it.explain.forEach((q,i)=>{
+      const id = `${it.id}-ex${i}`;
+      const d = document.createElement('div'); d.className='field'; d.style.marginTop='.8rem';
+      d.innerHTML = `<label for="${id}">Penjelasan diri ${i+1}: ${esc(q)}</label><textarea id="${id}" maxlength="400"></textarea>
+        <div class="actions"><button type="button" class="ghost">Simpan penjelasan</button></div><p class="fb ok" role="status"></p>`;
+      d.querySelector('button').onclick=()=>{
+        const t = d.querySelector('textarea').value.trim();
+        if(t.length<5){ d.querySelector('.fb').className='fb bad'; d.querySelector('.fb').textContent='Tulis penjelasanmu dulu, minimal satu kalimat.'; return; }
+        log({jenis:'penjelasan', modul:m.id, soal:id, jawaban:t});
+        d.querySelector('.fb').className='fb ok'; d.querySelector('.fb').textContent='Tersimpan. Bandingkan dengan teman atau tanyakan ke guru.';
+      };
+      ex.appendChild(d);
+    });
+  }
+  return box;
+}
+
+function renderSoal(box, it, m){
+  const st = P[it.id] || (P[it.id] = {status:'baru', tries:0, hint:0});
+  const hid = 'h-'+it.id;
+  box.setAttribute('aria-labelledby', hid);
+  if(it.checkpoint) box.classList.add('extra');
+  const fieldsHtml = it.fields.map(f=>{
+    const id = `${it.id}-${f.k}`;
+    if(f.t==='num') return `<div class="field"><label for="${id}">${esc(f.label)}</label><input type="text" id="${id}" class="short" inputmode="text" autocomplete="off" data-k="${f.k}"></div>`;
+    if(f.t==='roots') return `<fieldset class="field" style="border:0;padding:0;margin:0"><legend style="font-weight:600">${esc(f.label)}</legend><div class="row" style="margin:0">`+
+      Array.from({length:f.n},(_,i)=>`<label class="sr" for="${id}${i}">${esc(f.label)} ${i+1}</label><span aria-hidden="true">x${i+1} =</span><input type="text" id="${id}${i}" class="short" autocomplete="off" data-k="${f.k}" data-i="${i}">`).join('')+`</div></fieldset>`;
+    if(f.t==='choice') return `<div class="field"><label for="${id}">${esc(f.label)}</label><select id="${id}" data-k="${f.k}"><option value="">Pilih…</option>${f.opts.map(o=>`<option>${esc(o)}</option>`).join('')}</select></div>`;
+  }).join('');
+  box.innerHTML = `<h2 id="${hid}"><span class="tag">${esc(it.tugas)}</span>${it.checkpoint?'<span class="tag cp">Titik periksa</span>':''}${esc(it.label)} <span class="muted" style="font-weight:400;font-size:.9rem">· ${esc(it.fade)}</span> <span class="done-badge" ${st.status==='tuntas'?'':'hidden'}>✓ tuntas</span></h2>
+    ${it.given?`<div class="given"><span class="muted">Sudah dikerjakan:</span><br>${it.given}</div>`:''}
+    <p>${it.prompt}</p>
+    <form novalidate><div class="row">${fieldsHtml}</div>
+    ${it.checkpoint?`<div class="row"><div class="field"><label for="${it.id}-yakin">Seberapa yakin kamu?</label><select id="${it.id}-yakin"><option value="">Pilih…</option><option>Yakin</option><option>Ragu</option></select></div></div>`:''}
+    <p class="muted" style="font-size:.85rem">Pecahan boleh ditulis 7/3, desimal pakai koma, minus boleh − atau -.</p>
+    <div class="actions"><button type="submit">Periksa</button><button type="button" class="ghost" data-act="hint">Minta bantuan (${st.hint}/4)</button><button type="button" class="ghost" data-act="guru" ${st.tries>=3 && st.status!=='tuntas'?'':'hidden'}>Tandai: perlu dibantu guru</button></div>
+    </form>
+    <div class="fb" role="status" aria-live="polite"></div>
+    <div class="hints" aria-live="polite"></div>
+    <div class="post"></div>`;
+  const fb = box.querySelector('.fb'), hints = box.querySelector('.hints'), form = box.querySelector('form');
+  const showHints = ()=>{ hints.innerHTML = it.hints.slice(0,st.hint).map((h,i)=>`<div class="hint"><b>${L[i]}:</b> ${h}</div>`).join(''); box.querySelector('[data-act=hint]').textContent=`Minta bantuan (${st.hint}/4)`; box.querySelector('[data-act=hint]').disabled = st.hint>=4; };
+  showHints();
+  if(!st.t0) st.t0 = Date.now();
+  box.querySelector('[data-act=hint]').onclick=()=>{ if(st.hint<4){ st.hint++; save(); showHints(); log({jenis:'bantuan', modul:m.id, soal:it.id, tugas:it.tugas, bantuan:st.hint}); } };
+  box.querySelector('[data-act=guru]').onclick=()=>{ st.status='minta_guru'; save(); log({jenis:'minta_guru', modul:m.id, soal:it.id, tugas:it.tugas, percobaan:st.tries, bantuan:st.hint}); fb.className='fb ok'; fb.textContent='Sudah ditandai. Gurumu akan melihatnya. Sambil menunggu, kamu boleh lanjut ke soal berikutnya.'; };
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const v = {}, raw = {};
+    let missing = false;
+    it.fields.forEach(f=>{
+      if(f.t==='roots'){
+        const ins = [...form.querySelectorAll(`[data-k="${f.k}"]`)];
+        const vals = ins.map(i=>i.value.trim()).filter(s=>s!=='');
+        raw[f.k] = vals.join(' ; ');
+        if(!vals.length || (!f.allowBlank && vals.length<f.n)) missing = true;
+        const nums = vals.map(parseNum); if(nums.some(isNaN)) missing='format';
+        v[f.k] = nums;
+      } else {
+        const el = form.querySelector(`[data-k="${f.k}"]`), s = el.value.trim();
+        raw[f.k] = s;
+        if(s==='') missing = true;
+        v[f.k] = f.t==='num' ? parseNum(s) : s;
+        if(f.t==='num' && s!=='' && isNaN(v[f.k])) missing='format';
+      }
+    });
+    const yakin = it.checkpoint ? (form.querySelector(`#${it.id}-yakin`).value||'') : '';
+    if(missing){ fb.className='fb bad'; fb.textContent = missing==='format' ? 'Ada isian yang bukan bilangan. Contoh yang bisa dibaca: −3, 7/3, 0,5.' : 'Lengkapi semua isian dulu.'; return; }
+    st.tries++;
+    const r = it.check(v);
+    const dur = Math.round((Date.now()-st.t0)/1000);
+    log({jenis:'jawab', modul:m.id, soal:it.id, tugas:it.tugas, benar:r.ok?1:0, percobaan:st.tries, bantuan:st.hint, kode:r.code||'', yakin, jawaban:JSON.stringify(raw), durasi:dur});
+    if(r.ok){
+      const wasWrong = st.tries>1;
+      st.status='tuntas'; save();
+      fb.className='fb ok'; fb.innerHTML = '<b>Benar.</b> '+r.msg;
+      box.querySelector('.done-badge').hidden=false; box.querySelector('[data-act=guru]').hidden=true;
+      if(it.checkpoint && yakin==='Ragu') fb.innerHTML += ' <br>Kamu menjawab “ragu”: baca lagi contoh lengkap di atas sebelum latihan mandiri.';
+      if(wasWrong) askWhy(box, it, m);
+      render2nav();
+    } else {
+      if(st.status!=='minta_guru') st.status='mencoba'; save();
+      fb.className='fb bad'; fb.innerHTML = '<b>Belum tepat.</b> '+r.msg;
+      if(st.tries>=3 && st.status!=='tuntas') box.querySelector('[data-act=guru]').hidden=false;
+      if(it.checkpoint && st.tries===1 && it.extra) showExtra(box, it);
+    }
+  });
+  return box;
+}
+function askWhy(box, it, m){
+  const post = box.querySelector('.post'); if(post.childElementCount) return;
+  const id = it.id+'-why';
+  post.innerHTML = `<div class="field" style="margin-top:.8rem"><label for="${id}">Jelaskan dengan kalimatmu sendiri: mengapa jawaban pertamamu salah?</label>
+    <p class="muted" style="margin:0">Kerangka: “Jawaban awal saya salah karena … . Yang benar adalah … , sebab … .”</p>
+    <textarea id="${id}" maxlength="400"></textarea><div class="actions"><button type="button" class="ghost">Simpan</button></div><p class="fb" role="status"></p></div>`;
+  post.querySelector('button').onclick=()=>{
+    const t = post.querySelector('textarea').value.trim(), f = post.querySelector('.fb');
+    if(t.length<5){ f.className='fb bad'; f.textContent='Tulis minimal satu kalimat.'; return; }
+    log({jenis:'penjelasan', modul:m.id, soal:id, tugas:it.tugas, jawaban:t}); f.className='fb ok'; f.textContent='Tersimpan.';
+  };
+}
+function showExtra(box, it){
+  if(box.querySelector('.extra-ex')) return;
+  const d = document.createElement('div'); d.className='given extra-ex';
+  d.innerHTML = `<b>${esc(it.extra.title)}.</b> Pelajari contoh ini, lalu coba lagi soal di atas.<br>${it.extra.html}`;
+  box.querySelector('.post').before(d);
+}
+function render2nav(){ // perbarui hitungan tanpa merender ulang isi
+  const nav = $('#modNav');
+  [...nav.children].forEach((b,i)=>{ const m=MODULES[i], s=m.items.filter(x=>x.type==='soal'); b.textContent=`${m.title} (${s.filter(x=>P[x.id]?.status==='tuntas').length}/${s.length})`; });
+  const all = MODULES.flatMap(m=>m.items.filter(i=>i.type==='soal')), done = all.filter(i=>P[i.id]?.status==='tuntas').length;
+  $('#progBar').style.width = (100*done/all.length)+'%'; $('#progText').textContent = `Tuntas ${done} dari ${all.length} soal.`;
+  if(done===all.length) log({jenis:'selesai_semua'});
+}
+function save(){ store.set(KEY(), P); }
+
+/* ---------------- Interaktif: kebun (tebak-dan-cek + model luas) ---------------- */
+function renderKebun(box){
+  box.innerHTML = `<h2>Masalah kebun Pak Rahman <span class="tag">Konkret → piktorial</span></h2>
+  <p>Pak Rahman ingin membuat kebun persegi panjang. Panjangnya 2 m lebih dari lebarnya, luasnya 15 m². Misalkan lebarnya <span class="m">x</span>, maka panjangnya <span class="m">x + 2</span> dan luasnya <span class="m">x(x + 2) = x² + 2x</span>.</p>
+  <div class="row"><div class="svgwrap" id="kebunSvg" aria-hidden="true"></div>
+  <div><div class="row"><div class="field"><label for="kebunX">Coba nilai x</label><input type="text" id="kebunX" class="short" autocomplete="off"></div><button type="button" id="kebunBtn">Hitung luas</button></div>
+  <p id="kebunOut" role="status" aria-live="polite"></p></div></div>
+  <table><caption class="sr">Tabel tebak-dan-cek</caption><thead><tr><th scope="col">x</th><th scope="col">x² + 2x</th><th scope="col">= 15?</th></tr></thead><tbody id="kebunTbl"></tbody></table>
+  <p class="muted">Tip: coba juga bilangan negatif. Apakah ada nilai lain yang membuat luasnya 15?</p>`;
+  const draw = x=>{
+    const w = Math.max(0.5, Math.min(8, Math.abs(x)||3)), s = 26, W=(w+2)*s, H=w*s;
+    box.querySelector('#kebunSvg').innerHTML = `<svg viewBox="-30 -24 ${W+60} ${H+50}" width="100%" role="img"><rect x="0" y="0" width="${w*s}" height="${H}" fill="var(--tile-x2)" stroke="var(--ink)"/><rect x="${w*s}" y="0" width="${2*s}" height="${H}" fill="var(--tile-x)" stroke="var(--ink)"/>
+      <text x="${w*s/2}" y="${H/2+5}" text-anchor="middle">x²</text><text x="${w*s+s}" y="${H/2+5}" text-anchor="middle">2x</text>
+      <text x="${W/2}" y="-8" text-anchor="middle">x + 2</text><text x="-8" y="${H/2+5}" text-anchor="end">x</text></svg>`;
+  };
+  draw(3);
+  const go = ()=>{
+    const x = parseNum(box.querySelector('#kebunX').value);
+    if(isNaN(x)){ box.querySelector('#kebunOut').textContent='Masukkan sebuah bilangan.'; return; }
+    const L = x*x+2*x, ok = eq(L,15);
+    box.querySelector('#kebunOut').textContent = `x = ${fmt(x)}: luas = ${fmt(x)}² + 2·${fmt(x)} = ${fmt(L)}. ${ok?'Tepat 15.':(L<15?'Kurang dari 15.':'Lebih dari 15.')}${ok&&x<0?' Tetapi lebar negatif tidak mungkin.':''}`;
+    const tr = document.createElement('tr'); tr.innerHTML = `<td>${fmt(x)}</td><td>${fmt(L)}</td><td>${ok?'ya':'belum'}</td>`;
+    box.querySelector('#kebunTbl').appendChild(tr); draw(x);
+  };
+  box.querySelector('#kebunBtn').onclick = go;
+  box.querySelector('#kebunX').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } });
+  return box;
+}
+
+/* ---------------- Interaktif: diagram kotak ---------------- */
+function renderKotak(box){
+  box.innerHTML = `<h2>Diagram kotak (model luas) <span class="tag">Piktorial</span></h2>
+  <p>Untuk <span class="m">x² − 2x − 15</span>: kotak kiri atas berisi <span class="m">x²</span>, kotak kanan bawah berisi <span class="m">−15</span>. Isi label p dan q, lalu lihat apakah dua kotak tengah berjumlah <span class="m">−2x</span>.</p>
+  <div class="row"><div class="field"><label for="kp">Label p</label><input type="text" id="kp" class="short" autocomplete="off"></div><div class="field"><label for="kq">Label q</label><input type="text" id="kq" class="short" autocomplete="off"></div></div>
+  <div class="boxgrid" aria-hidden="true"><div></div><div class="lbl">x</div><div class="lbl" id="bq">+ q</div><div class="lbl">x</div><div class="c-x2">x²</div><div class="c-x" id="b1">qx</div><div class="lbl" id="bp">+ p</div><div class="c-x" id="b2">px</div><div class="c-1" id="b3">pq</div></div>
+  <p id="kotakOut" role="status" aria-live="polite" class="muted">Isi p dan q.</p>`;
+  const upd = ()=>{
+    const p = parseNum(box.querySelector('#kp').value), q = parseNum(box.querySelector('#kq').value);
+    if(isNaN(p)||isNaN(q)){ box.querySelector('#kotakOut').textContent='Isi p dan q dengan bilangan.'; return; }
+    const sg = n => (n<0?'− ':'+ ')+fmt(Math.abs(n));
+    box.querySelector('#bp').textContent = sg(p); box.querySelector('#bq').textContent = sg(q);
+    box.querySelector('#b1').textContent = fmt(q)+'x'; box.querySelector('#b2').textContent = fmt(p)+'x'; box.querySelector('#b3').textContent = fmt(p*q);
+    const okProd = eq(p*q,-15), okSum = eq(p+q,-2);
+    box.querySelector('#kotakOut').textContent = `Kanan bawah: ${fmt(p*q)} ${okProd?'(cocok dengan −15)':'(belum −15)'}. Dua kotak tengah: ${fmt(q)}x + ${fmt(p)}x = ${fmt(p+q)}x ${okSum?'(cocok dengan −2x)':'(belum −2x)'}.` + (okProd&&okSum?` Jadi x² − 2x − 15 = (x ${sg(p)})(x ${sg(q)}).`:'');
+  };
+  box.querySelector('#kp').addEventListener('input', upd); box.querySelector('#kq').addEventListener('input', upd);
+  return box;
+}
+
+/* ---------------- Interaktif: penjelajah parabola & diskriminan ---------------- */
+function polyStr(a,b,c){
+  const term=(k,v,first)=>{ if(k===0) return ''; const sgn=k<0?'−':'+', m=Math.abs(k); const coef=(m===1&&v)?'':fmt(m);
+    return first ? (k<0?'−':'')+coef+v : ` ${sgn} ${coef}${v}`; };
+  return term(a,'x²',true)+term(b,'x',false)+(c===0?'':` ${c<0?'−':'+'} ${fmt(Math.abs(c))}`);
+}
+function renderExplorer(box){
+  box.innerHTML = `<h2>Penjelajah parabola <span class="tag">Konkret → piktorial</span></h2>
+  <p>Geser a, b, dan c. Perhatikan hubungan posisi puncak, banyaknya titik potong dengan sumbu x, dan nilai <span class="m">D = b² − 4ac</span>.</p>
+  <div class="row sliders">
+    <div class="field"><label for="sa">a = <output id="oa">1</output></label><input type="range" id="sa" min="-4" max="4" step="1" value="1"></div>
+    <div class="field"><label for="sb">b = <output id="ob">0</output></label><input type="range" id="sb" min="-8" max="8" step="1" value="0"></div>
+    <div class="field"><label for="sc">c = <output id="oc">−4</output></label><input type="range" id="sc" min="-10" max="10" step="1" value="-4"></div>
+  </div>
+  <div class="svgwrap" style="max-width:520px"><svg id="exSvg" viewBox="0 0 400 300" width="100%" role="img" aria-labelledby="exDesc"><title id="exDesc">Grafik parabola</title></svg></div>
+  <p id="exOut" role="status" aria-live="polite"></p>`;
+  const sa=box.querySelector('#sa'), sb=box.querySelector('#sb'), sc=box.querySelector('#sc'), svg=box.querySelector('#exSvg');
+  const X0=-8, X1=8, Y0=-10, Y1=12, W=400, H=300;
+  const px = x => (x-X0)/(X1-X0)*W, py = y => H-(y-Y0)/(Y1-Y0)*H;
+  let t=null;
+  const upd = ()=>{
+    let a=+sa.value, b=+sb.value, c=+sc.value;
+    if(a===0){ a = 1; sa.value = 1; } // a ≠ 0 untuk persamaan kuadrat
+    box.querySelector('#oa').textContent=fmt(a); box.querySelector('#ob').textContent=fmt(b); box.querySelector('#oc').textContent=fmt(c);
+    const D=b*b-4*a*c, xv=-b/(2*a), yv=a*xv*xv+b*xv+c;
+    let d=''; for(let i=0;i<=200;i++){ const x=X0+(X1-X0)*i/200, y=a*x*x+b*x+c; const yy=Math.max(Y0-5,Math.min(Y1+5,y)); d+=(i?'L':'M')+px(x).toFixed(1)+' '+py(yy).toFixed(1); }
+    let grid=''; for(let x=X0;x<=X1;x+=2) grid+=`<line x1="${px(x)}" y1="0" x2="${px(x)}" y2="${H}" stroke="var(--line)"/>`; for(let y=-10;y<=12;y+=2) grid+=`<line x1="0" y1="${py(y)}" x2="${W}" y2="${py(y)}" stroke="var(--line)"/>`;
+    let roots='', desc='';
+    if(D>EPS){ const r1=(-b-Math.sqrt(D))/(2*a), r2=(-b+Math.sqrt(D))/(2*a); [r1,r2].forEach(r=>roots+=`<circle cx="${px(r)}" cy="${py(0)}" r="5" fill="var(--bad)"/>`); desc=`D = ${fmt(D)} > 0: dua titik potong dengan sumbu x, di x ≈ ${fmt(Math.min(r1,r2))} dan x ≈ ${fmt(Math.max(r1,r2))}. Dua akar real berbeda.`; }
+    else if(Math.abs(D)<=EPS){ roots=`<circle cx="${px(xv)}" cy="${py(0)}" r="5" fill="var(--bad)"/>`; desc=`D = 0: parabola menyinggung sumbu x di x = ${fmt(xv)}. Akar kembar.`; }
+    else { const re=-b/(2*a), im=Math.sqrt(-D)/(2*Math.abs(a)); desc=`D = ${fmt(D)} < 0: parabola tidak memotong sumbu x. Tidak ada akar real, tetapi ada dua akar imajiner x ≈ ${fmt(re)} ± ${fmt(im)}i.`; }
+    svg.innerHTML = `<title id="exDesc">Grafik y = ${polyStr(a,b,c)}. ${desc}</title>${grid}
+      <line x1="0" y1="${py(0)}" x2="${W}" y2="${py(0)}" stroke="var(--ink)" stroke-width="1.5"/><line x1="${px(0)}" y1="0" x2="${px(0)}" y2="${H}" stroke="var(--ink)" stroke-width="1.5"/>
+      <text x="${W-12}" y="${py(0)-6}">x</text><text x="${px(0)+6}" y="14">y</text>
+      <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="3"/>${roots}
+      ${(yv>=Y0&&yv<=Y1&&xv>=X0&&xv<=X1)?`<circle cx="${px(xv)}" cy="${py(yv)}" r="4" fill="var(--ink)"/>`:''}`;
+    clearTimeout(t); t=setTimeout(()=>{ box.querySelector('#exOut').innerHTML = `<b>y = ${polyStr(a,b,c)}</b>. Puncak (${fmt(xv)}, ${fmt(yv)}). ${desc}`; }, 250);
+  };
+  [sa,sb,sc].forEach(s=>s.addEventListener('input',upd)); upd();
+  return box;
+}
+</script>
+</body>
+</html>
