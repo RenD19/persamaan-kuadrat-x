@@ -14,13 +14,21 @@
  *  - Validasi dan pemotongan semua isian; maksimal 50 kejadian per kiriman.
  *  - Pencegahan formula injection (nilai yang diawali = + - @ diberi tanda kutip).
  *  - Batas laju per sesi (CacheService) dan kunci tulis (LockService).
- *  - doGet tidak pernah mengembalikan data siswa.
+ *  - doGet hanya mengembalikan daftar siswa (kelas, absen, nama) bila kode kelas benar.
+ *    Tidak ada jawaban atau progres yang pernah dikirim balik.
+ *
+ * Daftar siswa: tab "Daftar Siswa" dengan kolom Kelas | Nomor Absen | Nama.
+ * Halaman siswa memuatnya untuk mengisi dropdown kelas dan nama.
  */
 
 var SHEET_LOG = 'Log';
 var SHEET_REKAP = 'Rekap Siswa';
 var SHEET_SOAL = 'Rekap Soal';
 var SHEET_SET = 'Pengaturan';
+var SHEET_SISWA = 'Daftar Siswa';
+var SISWA_HEADERS = ['Kelas', 'Nomor Absen', 'Nama'];
+var CACHE_SISWA = 'daftar_siswa_v1';
+var CACHE_SISWA_DETIK = 120; // perubahan di tab Daftar Siswa tampil paling lambat 2 menit
 var MAX_EVENTS = 50;
 var TOTAL_SOAL = 21; // jumlah soal di index.html; ubah jika soal ditambah
 var RATE_PER_MIN = 120;
@@ -41,8 +49,76 @@ function doPost(e) {
   }
 }
 
-function doGet() {
+function doGet(e) {
+  var p = (e && e.parameter) || {};
+  if (p.aksi === 'siswa') {
+    try {
+      return json_(handleDaftar_(p.kode));
+    } catch (err) {
+      return json_({ ok: false, error: 'server' });
+    }
+  }
   return json_({ ok: true, app: 'persamaan-kuadrat', info: 'Gunakan POST.' });
+}
+
+/** Mengirim daftar siswa untuk dropdown, hanya bila kode kelas cocok. */
+function handleDaftar_(kodeMasuk) {
+  var kode = PropertiesService.getScriptProperties().getProperty('KODE_KELAS');
+  if (!kode) return { ok: false, error: 'belum_setup' };
+  if (typeof kodeMasuk !== 'string' || kodeMasuk.trim().toUpperCase() !== kode.toUpperCase()) {
+    return { ok: false, error: 'kode_salah' };
+  }
+  return { ok: true, kelas: daftarSiswa_() };
+}
+
+/**
+ * Daftar siswa per kelas, urut nomor absen: [{kelas:'X AL FATTAH', siswa:[{absen:1, nama:'...'}]}].
+ * Disimpan sebentar di cache agar satu kelas yang membuka halaman bersamaan tidak membebani Sheet.
+ */
+function daftarSiswa_() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get(CACHE_SISWA);
+  if (hit) return JSON.parse(hit);
+  var sh = SpreadsheetApp.getActive().getSheetByName(SHEET_SISWA);
+  var data = (sh && sh.getLastRow() > 1) ? sh.getRange(1, 1, sh.getLastRow(), Math.max(3, sh.getLastColumn())).getDisplayValues() : [];
+  var out = susunDaftar_(data);
+  try { cache.put(CACHE_SISWA, JSON.stringify(out), CACHE_SISWA_DETIK); } catch (err) { /* daftar terlalu besar untuk cache: tetap jalan */ }
+  return out;
+}
+
+/** Murni (tanpa layanan Google) agar bisa diuji. data = isi tab termasuk baris judul. */
+function susunDaftar_(data) {
+  if (!data.length) return [];
+  var head = data[0].map(function (h) { return String(h).trim().toLowerCase(); });
+  var cari = function (re, def) { for (var i = 0; i < head.length; i++) if (re.test(head[i])) return i; return def; };
+  var cK = cari(/^kelas/, 0), cA = cari(/absen|^no/, 1), cN = cari(/^nama/, 2);
+  var per = {}, urut = [];
+  data.slice(1).forEach(function (r) {
+    var kelas = normKelas_(r[cK]), absen = parseInt(r[cA], 10), nama = clean_(r[cN], 60);
+    if (!kelas || !(absen >= 1 && absen <= 60) || !nama) return; // baris kosong / tidak lengkap dilewati
+    if (!per[kelas]) { per[kelas] = {}; urut.push(kelas); }
+    per[kelas][absen] = nama; // absen ganda: baris terakhir yang dipakai
+  });
+  urut.sort();
+  return urut.map(function (k) {
+    return { kelas: k, siswa: Object.keys(per[k]).map(Number).sort(function (a, b) { return a - b; })
+      .map(function (a) { return { absen: a, nama: per[k][a] }; }) };
+  });
+}
+
+function normKelas_(v) {
+  var k = clean_(v, 20).toUpperCase().replace(/\s+/g, ' ');
+  return /^[A-Z0-9 .\-]{1,20}$/.test(k) ? k : '';
+}
+
+/** Nama resmi dari tab Daftar Siswa untuk kelas + absen, atau '' bila tidak terdaftar. */
+function namaTerdaftar_(kelas, absen) {
+  var d = daftarSiswa_();
+  for (var i = 0; i < d.length; i++) {
+    if (d[i].kelas !== kelas) continue;
+    for (var j = 0; j < d[i].siswa.length; j++) if (d[i].siswa[j].absen === absen) return d[i].siswa[j].nama;
+  }
+  return '';
 }
 
 function handlePayload_(body) {
@@ -54,15 +130,22 @@ function handlePayload_(body) {
     return { ok: false, error: 'kode_salah' };
   }
 
-  var kelas = clean_(body.kelas, 12).toUpperCase();
+  var kelas = normKelas_(body.kelas);
   var absen = parseInt(body.absen, 10);
-  var nama = clean_(body.nama, 30);
+  var nama = clean_(body.nama, 60);
   var sesi = clean_(body.sesi, 16);
-  if (!/^[A-Z0-9 .\-]{1,12}$/.test(kelas)) return { ok: false, error: 'kelas' };
+  if (!kelas) return { ok: false, error: 'kelas' };
   if (!(absen >= 1 && absen <= 60)) return { ok: false, error: 'absen' };
   if (!nama) return { ok: false, error: 'nama' };
   if (!/^[a-z0-9]{1,16}$/.test(sesi)) return { ok: false, error: 'sesi' };
   if (!Array.isArray(body.events) || body.events.length === 0) return { ok: true, n: 0 };
+  // Bila siswa ada di tab Daftar Siswa, pakai nama resmi dari sana (bukan ketikan siswa).
+  // Siswa yang tidak terdaftar tetap diterima agar datanya tidak hilang; namanya diberi tanda.
+  // Bila tab Daftar Siswa kosong/belum dibuat, nama ketikan siswa dipakai apa adanya.
+  if (daftarSiswa_().length) {
+    var resmi = namaTerdaftar_(kelas, absen);
+    nama = resmi || (nama + ' (tidak terdaftar)').slice(0, 75);
+  }
   if (body.events.length > MAX_EVENTS) return { ok: false, error: 'terlalu_banyak' };
 
   // Batas laju per sesi
@@ -114,6 +197,7 @@ function setup() {
   if (!props.getProperty('KODE_KELAS')) props.setProperty('KODE_KELAS', randomCode_());
   if (!props.getProperty('TERIMA_DATA')) props.setProperty('TERIMA_DATA', 'ya');
   sheet_(SHEET_LOG, LOG_HEADERS);
+  sheet_(SHEET_SISWA, SISWA_HEADERS);
   tulisPengaturan_();
   rekap();
 }
@@ -121,11 +205,24 @@ function setup() {
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Media Kuadrat')
     .addItem('Perbarui rekap', 'rekap')
+    .addItem('Terapkan perubahan Daftar Siswa sekarang', 'segarkanDaftar')
     .addItem('Ganti kode kelas', 'gantiKode')
     .addItem('Buka / tutup penerimaan data', 'bukaTutup')
     .addItem('Pasang rekap otomatis (tiap 15 menit)', 'pasangPemicu')
     .addItem('Hapus log lebih dari 180 hari', 'hapusLogLama')
     .addToUi();
+}
+
+function segarkanDaftar() {
+  CacheService.getScriptCache().remove(CACHE_SISWA);
+  var d = daftarSiswa_(), n = 0;
+  d.forEach(function (k) { n += k.siswa.length; });
+  SpreadsheetApp.getActive().toast(n + ' siswa di ' + d.length + ' kelas siap tampil di dropdown.', 'Daftar Siswa');
+}
+
+/** Cache dibersihkan otomatis setiap tab Daftar Siswa diedit (pemicu sederhana). */
+function onEdit(e) {
+  if (e && e.range && e.range.getSheet().getName() === SHEET_SISWA) CacheService.getScriptCache().remove(CACHE_SISWA);
 }
 
 function gantiKode() {

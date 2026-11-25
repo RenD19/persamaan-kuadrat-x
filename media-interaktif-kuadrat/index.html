@@ -24,6 +24,7 @@
   --hint-bg:#30291a; --hint-line:#9b7f2c; --tile-x2:#25405f; --tile-x:#25432d; --tile-1:#4a3624;
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 html{font-size:17px}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;line-height:1.6}
 .skip{position:absolute;left:-999px;top:0;background:var(--accent);color:var(--accent-ink);padding:.5rem 1rem;z-index:10}
@@ -101,14 +102,24 @@ input[type=range]{width:100%;min-height:44px;accent-color:var(--accent)}
 <section id="scrLogin" aria-labelledby="hLogin">
   <h1 id="hLogin">Masuk untuk mulai belajar</h1>
   <div class="card">
-    <p>Isi data di bawah. Progresmu dikirim ke catatan gurumu supaya guru tahu bagian mana yang perlu dibantu. Yang dicatat hanya kelas, nomor absen, nama panggilan, jawabanmu, dan berapa kali kamu mencoba. Tidak ada nilai rapor yang diambil dari sini.</p>
+    <p>Isi data di bawah. Progresmu dikirim ke catatan gurumu supaya guru tahu bagian mana yang perlu dibantu. Yang dicatat hanya kelas, nomor absen, nama, jawabanmu, dan berapa kali kamu mencoba. Tidak ada nilai rapor yang diambil dari sini.</p>
     <form id="loginForm" novalidate>
       <div class="row">
         <div class="field"><label for="inKode">Kode kelas (dari guru)</label><input type="text" id="inKode" class="short" autocomplete="off" required maxlength="20" aria-describedby="loginErr"></div>
-        <div class="field"><label for="inKelas">Kelas</label><input type="text" id="inKelas" class="short" placeholder="X-3" required maxlength="12" autocomplete="off"></div>
-        <div class="field"><label for="inAbsen">Nomor absen</label><input type="number" id="inAbsen" class="short" min="1" max="60" required inputmode="numeric"></div>
-        <div class="field"><label for="inNama">Nama panggilan</label><input type="text" id="inNama" maxlength="30" required autocomplete="off"></div>
       </div>
+      <p id="daftarInfo" class="muted" aria-live="polite"></p>
+      <!-- Mode daftar: kelas & nama diambil dari tab "Daftar Siswa" di Google Sheet guru -->
+      <div class="row" id="modeDaftar" hidden>
+        <div class="field"><label for="pilKelas">Kelas</label><select id="pilKelas"><option value="">Pilih kelas…</option></select></div>
+        <div class="field"><label for="pilSiswa">Nama</label><select id="pilSiswa" disabled><option value="">Pilih kelas dulu…</option></select></div>
+      </div>
+      <!-- Mode manual: dipakai bila daftar tidak bisa dimuat atau nama siswa belum ada di daftar -->
+      <div class="row" id="modeManual" hidden>
+        <div class="field"><label for="inKelas">Kelas</label><input type="text" id="inKelas" class="short" placeholder="X AL FATTAH" maxlength="20" autocomplete="off"></div>
+        <div class="field"><label for="inAbsen">Nomor absen</label><input type="number" id="inAbsen" class="short" min="1" max="60" inputmode="numeric"></div>
+        <div class="field"><label for="inNama">Nama panggilan</label><input type="text" id="inNama" maxlength="30" autocomplete="off"></div>
+      </div>
+      <div class="actions" id="daftarAksi" hidden><button type="button" class="ghost" id="btnMuatUlang" hidden>Coba muat daftar lagi</button><button type="button" class="ghost" id="btnManual" hidden>Namaku tidak ada di daftar</button></div>
       <p id="loginErr" class="fb bad" role="alert"></p>
       <div class="actions"><button type="submit">Mulai</button></div>
     </form>
@@ -527,6 +538,62 @@ function log(ev){
 }
 
 /* ---------------- Masuk ---------------- */
+/* Daftar siswa diambil dari Web App (GET ?aksi=siswa&kode=…) setelah kode kelas diisi.
+   Bentuk: [{kelas:'X AL FATTAH', siswa:[{absen:1, nama:'…'}]}]. Nama siswa tidak pernah ditulis di file ini. */
+let DAFTAR = null;      // null = belum/tidak termuat → mode manual
+let daftarKode = '';    // kode yang dipakai saat daftar termuat (sudah terbukti benar)
+let daftarReq = 0, daftarTimer = null;
+const kodeOk = k => /^[A-Za-z0-9]{4,20}$/.test(k);
+function setMode(mode, info){
+  $('#modeDaftar').hidden = mode!=='daftar';
+  $('#modeManual').hidden = mode!=='manual';
+  $('#daftarInfo').textContent = info || '';
+  $('#btnMuatUlang').hidden = !(mode==='manual' && CONFIG.ENDPOINT && DAFTAR===null && kodeOk($('#inKode').value.trim()));
+  $('#btnManual').hidden = mode!=='daftar';
+  $('#daftarAksi').hidden = $('#btnMuatUlang').hidden && $('#btnManual').hidden;
+}
+async function muatDaftar(){
+  const kode = $('#inKode').value.trim();
+  if(!CONFIG.ENDPOINT){ DAFTAR=null; setMode('manual', 'Mode uji: isi kelas, nomor absen, dan nama secara manual.'); return; }
+  if(!kodeOk(kode)){ DAFTAR=null; setMode('none', 'Isi kode kelas dulu, lalu pilih kelas dan namamu.'); return; }
+  if(DAFTAR && daftarKode.toUpperCase()===kode.toUpperCase()) return;
+  const id = ++daftarReq;
+  setMode('none', 'Memuat daftar siswa…');
+  let d = null, gagal = 'jaringan';
+  try{
+    const ctl = new AbortController(), to = setTimeout(()=>ctl.abort(), 12000);
+    const res = await fetch(CONFIG.ENDPOINT + '?aksi=siswa&kode=' + encodeURIComponent(kode), {redirect:'follow', signal:ctl.signal});
+    clearTimeout(to);
+    d = await res.json();
+  }catch(e){ d = null; }
+  if(id !== daftarReq) return; // kode sudah diubah lagi, abaikan jawaban lama
+  if(d && d.ok && Array.isArray(d.kelas) && d.kelas.length){
+    DAFTAR = d.kelas; daftarKode = kode; isiKelas(); setMode('daftar'); $('#loginErr').textContent=''; return;
+  }
+  DAFTAR = null;
+  if(d && d.error==='kode_salah'){ setMode('none'); $('#loginErr').textContent='Kode kelas tidak dikenali. Periksa lagi atau tanyakan ke guru.'; return; }
+  if(d && d.ok) gagal = 'kosong';
+  setMode('manual', gagal==='kosong' ? 'Guru belum mengisi daftar siswa. Isi kelas, nomor absen, dan nama secara manual.'
+                                     : 'Daftar siswa tidak dapat dimuat (koneksi?). Isi data secara manual, atau coba muat lagi.');
+}
+function isiKelas(){
+  const sel = $('#pilKelas'), ingat = (store.get('pk-siswa', null)||{}).kelas || sel.value;
+  sel.innerHTML = '<option value="">Pilih kelas…</option>' + DAFTAR.map(k=>`<option>${esc(k.kelas)}</option>`).join('');
+  if(DAFTAR.some(k=>k.kelas===ingat)) sel.value = ingat;
+  isiSiswa();
+}
+function isiSiswa(){
+  const k = DAFTAR && DAFTAR.find(x=>x.kelas===$('#pilKelas').value), sel = $('#pilSiswa');
+  sel.innerHTML = k ? '<option value="">Pilih namamu…</option>' + k.siswa.map(s=>`<option value="${s.absen}">${s.absen}. ${esc(s.nama)}</option>`).join('')
+                    : '<option value="">Pilih kelas dulu…</option>';
+  sel.disabled = !k;
+}
+$('#pilKelas').addEventListener('change', ()=>{ isiSiswa(); $('#loginErr').textContent=''; });
+$('#pilSiswa').addEventListener('change', ()=>{ $('#loginErr').textContent=''; });
+$('#inKode').addEventListener('input', ()=>{ clearTimeout(daftarTimer); $('#loginErr').textContent=''; daftarTimer = setTimeout(muatDaftar, 600); });
+$('#btnMuatUlang').onclick = ()=>{ DAFTAR=null; muatDaftar(); };
+$('#btnManual').onclick = ()=>{ const k=$('#pilKelas').value; if(k) $('#inKelas').value=k; setMode('manual', 'Isi kelas, nomor absen, dan namamu. Beri tahu guru supaya namamu ditambahkan ke daftar.'); $('#inKelas').focus(); };
+
 async function cekKode(kode){ // true = diterima/tidak bisa dicek (offline), false = kode salah
   if(!CONFIG.ENDPOINT || !navigator.onLine) return true;
   try{
@@ -537,16 +604,27 @@ async function cekKode(kode){ // true = diterima/tidak bisa dicek (offline), fal
 }
 $('#loginForm').addEventListener('submit', async e=>{
   e.preventDefault();
-  const kode = $('#inKode').value.trim(), kelas = $('#inKelas').value.trim().toUpperCase(),
-        absen = parseInt($('#inAbsen').value,10), nama = $('#inNama').value.trim();
-  const err = [];
-  if(!/^[A-Za-z0-9]{4,20}$/.test(kode)) err.push('Kode kelas terdiri dari 4–20 huruf/angka.');
-  if(!/^[A-Z0-9 .\-]{1,12}$/.test(kelas)) err.push('Kelas hanya huruf, angka, spasi, titik, atau tanda hubung (contoh: X-3).');
-  if(!(absen>=1 && absen<=60)) err.push('Nomor absen 1–60.');
-  if(!/^[\p{L} .'\-]{1,30}$/u.test(nama)) err.push('Nama panggilan hanya huruf (maksimal 30).');
-  if(err.length){ $('#loginErr').textContent = err.join(' '); $('#'+(err[0].startsWith('Kode')?'inKode':err[0].startsWith('Kelas')?'inKelas':err[0].startsWith('Nomor')?'inAbsen':'inNama')).focus(); return; }
+  const kode = $('#inKode').value.trim(), dariDaftar = !$('#modeDaftar').hidden && DAFTAR;
+  let kelas, absen, nama;
+  const err = [], fokus = [];
+  if(!kodeOk(kode)){ err.push('Kode kelas terdiri dari 4–20 huruf/angka.'); fokus.push('inKode'); }
+  if(dariDaftar){
+    kelas = $('#pilKelas').value; absen = parseInt($('#pilSiswa').value,10);
+    const k = DAFTAR.find(x=>x.kelas===kelas), s = k && k.siswa.find(x=>x.absen===absen);
+    if(!k){ err.push('Pilih kelasmu dari daftar.'); fokus.push('pilKelas'); }
+    else if(!s){ err.push('Pilih namamu dari daftar.'); fokus.push('pilSiswa'); }
+    nama = s ? s.nama : '';
+  } else if(!$('#modeManual').hidden){
+    kelas = $('#inKelas').value.trim().toUpperCase().replace(/\s+/g,' ');
+    absen = parseInt($('#inAbsen').value,10); nama = $('#inNama').value.trim();
+    if(!/^[A-Z0-9 .\-]{1,20}$/.test(kelas)){ err.push('Kelas hanya huruf, angka, spasi, titik, atau tanda hubung (contoh: X AL FATTAH).'); fokus.push('inKelas'); }
+    if(!(absen>=1 && absen<=60)){ err.push('Nomor absen 1–60.'); fokus.push('inAbsen'); }
+    if(!/^[\p{L} .'\-]{1,30}$/u.test(nama)){ err.push('Nama panggilan hanya huruf (maksimal 30).'); fokus.push('inNama'); }
+  } else if(kodeOk(kode)){ err.push('Tunggu daftar siswa selesai dimuat.'); fokus.push('inKode'); }
+  if(err.length){ $('#loginErr').textContent = err.join(' '); $('#'+fokus[0]).focus(); return; }
   $('#loginErr').textContent = '';
-  if(!(await cekKode(kode))){ $('#loginErr').textContent = 'Kode kelas tidak dikenali. Periksa lagi atau tanyakan ke guru.'; $('#inKode').focus(); return; }
+  // kode sudah terbukti benar bila daftar berhasil dimuat dengan kode yang sama
+  if(!(dariDaftar && daftarKode.toUpperCase()===kode.toUpperCase()) && !(await cekKode(kode))){ $('#loginErr').textContent = 'Kode kelas tidak dikenali. Periksa lagi atau tanyakan ke guru.'; $('#inKode').focus(); return; }
   S = {kode, kelas, absen, nama, sesi: Math.random().toString(36).slice(2,10)};
   store.set('pk-siswa', {kode, kelas}); // nama & absen tidak diingat, agar tidak terlihat oleh pengguna berikutnya
   $('#btnKeluar').hidden = false;
@@ -558,13 +636,16 @@ $('#loginForm').addEventListener('submit', async e=>{
 (function prefill(){
   const s = store.get('pk-siswa', null);
   if(s){ $('#inKode').value=s.kode||''; $('#inKelas').value=s.kelas||''; }
+  muatDaftar();
 })();
 $('#btnKeluar').onclick = ()=>{
   flush();
   S = null; P = {}; current = 'm1';
-  $('#inAbsen').value=''; $('#inNama').value='';
+  $('#inAbsen').value=''; $('#inNama').value=''; $('#pilSiswa').value='';
   $('#btnKeluar').hidden = true; $('#scrLearn').hidden = true; $('#scrLogin').hidden = false; $('#modBody').innerHTML='';
-  updateStatus(); $('#inAbsen').focus();
+  updateStatus();
+  if(DAFTAR){ setMode('daftar'); (!$('#pilSiswa').disabled ? $('#pilSiswa') : $('#pilKelas')).focus(); }
+  else { muatDaftar(); $('#inKode').focus(); }
 };
 
 /* ---------------- Render ---------------- */
