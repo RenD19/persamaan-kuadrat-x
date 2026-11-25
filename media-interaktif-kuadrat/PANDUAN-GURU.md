@@ -20,6 +20,35 @@ Alur data: siswa menjawab di `index.html` → jawaban dikirim ke Web App Apps Sc
    - Yang memiliki akses: **Siapa saja** (perlu agar siswa tanpa akun Google tetap bisa mengirim; lihat bagian Keamanan).
 6. Salin **URL aplikasi web** (berakhiran `/exec`).
 
+## 1b. Isi daftar siswa (untuk dropdown kelas dan nama)
+
+Nama siswa **hanya disimpan di Sheet**, tidak ditulis di `index.html`. Halaman siswa mengambil daftar ini setiap kali dibuka.
+
+1. Buka tab **Daftar Siswa** (dibuat otomatis oleh `setup`; jika belum ada, buat tab baru dengan nama persis `Daftar Siswa`).
+2. Baris 1 berisi judul kolom: **Kelas | Nomor Absen | Nama**. Mulai baris 2, satu baris per siswa:
+
+   | Kelas | Nomor Absen | Nama |
+   |---|---|---|
+   | X AL FATTAH | 1 | Ahmad Fauzi |
+   | X AL FATTAH | 2 | Bunga Lestari |
+   | X AL MAJID | 1 | Citra Dewi |
+
+   - Tulis nama kelas **sama persis** untuk semua siswa sekelas (huruf besar/kecil dan spasi ganda tidak masalah). Kelas tampil sebagai pilihan dropdown, urut abjad.
+   - Nomor absen 1–60. Nama boleh nama lengkap (maksimal 60 karakter). Baris yang tidak lengkap dilewati.
+   - Urutan baris bebas; dropdown nama selalu diurutkan menurut nomor absen.
+3. Perubahan daftar tampil di halaman siswa saat halaman dimuat ulang (paling lambat 2 menit). Untuk langsung menerapkan: menu **Media Kuadrat → Terapkan perubahan Daftar Siswa sekarang**; menu ini juga menampilkan jumlah siswa yang terbaca.
+
+Cara kerjanya bagi siswa: siswa mengetik **kode kelas**, lalu dropdown **Kelas** dan **Nama** muncul. Daftar hanya dikirim bila kode kelas benar, jadi orang yang tidak tahu kode tidak bisa melihat nama siswa.
+
+Cadangan bila daftar gagal dimuat (koneksi buruk, atau tab masih kosong): halaman otomatis beralih ke isian manual (kelas, nomor absen, nama). Siswa yang namanya belum ada di daftar bisa menekan **Namaku tidak ada di daftar**. Data mereka tetap diterima; di Sheet namanya diberi tanda `(tidak terdaftar)` supaya Bapak/Ibu bisa melengkapi daftar. Untuk siswa yang terdaftar, nama di Sheet selalu diambil dari tab Daftar Siswa (bukan ketikan siswa).
+
+### Sudah memakai versi lama Code.gs? Perbarui dan deploy ulang
+
+1. **Ekstensi → Apps Script**, ganti seluruh isi `Code.gs` dengan versi baru, **Simpan**.
+2. Jalankan **setup** sekali lagi (aman: kode kelas dan data tidak berubah; tab **Daftar Siswa** dibuat bila belum ada).
+3. **Terapkan → Kelola deployment → ikon pensil (Edit) → Versi: Versi baru → Terapkan.** Dengan cara ini URL `/exec` tetap sama, jadi `index.html` tidak perlu diubah. (Jangan memilih *Deployment baru*, karena itu menghasilkan URL baru.)
+4. Muat ulang Sheet agar menu baru muncul, isi tab Daftar Siswa, lalu uji dengan membuka `index.html` dan mengetik kode kelas.
+
 ## 2. Hubungkan media
 
 1. Buka `index.html` dengan editor teks (Notepad cukup).
@@ -37,7 +66,7 @@ Pilihan (urut dari yang paling disarankan):
 - **Google Sites**: sematkan file HTML.
 - Kirim file `index.html` lewat grup kelas / LMS; siswa membukanya di browser HP atau laptop.
 
-Yang perlu disampaikan ke siswa: kode kelas, cara mengisi kelas (misalnya `X-3`), nomor absen, dan nama panggilan. Di komputer bersama, minta siswa menekan **Keluar** setelah selesai.
+Yang perlu disampaikan ke siswa: kode kelas. Setelah kode diketik, siswa memilih kelas dan namanya dari dropdown. Di komputer bersama, minta siswa menekan **Keluar** setelah selesai.
 
 ## 4. Membaca hasil
 
@@ -56,6 +85,7 @@ Cara menindaklanjuti kode kesalahan: buka dokumen `04-scaffolding-kesalahan-umum
 - **Ganti kode kelas**: bila kode tersebar ke luar kelas.
 - **Hapus log lebih dari 180 hari**: jalankan di akhir semester.
 - Jangan bagikan Sheet ke siswa. Bagikan hanya ke guru yang perlu.
+- Siapa pun yang tahu kode kelas bisa melihat daftar nama dan nomor absen di dropdown. Bila kode bocor ke luar kelas, gunakan **Ganti kode kelas**.
 
 ## 6. Menambah soal
 
